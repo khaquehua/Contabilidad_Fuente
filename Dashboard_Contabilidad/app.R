@@ -340,9 +340,9 @@ server <- function(input, output, session) {
   useAutoColor()
   theme_mode <- reactiveVal("light")
   
-  data <- reactiveValues(OPT = NULL, LOG = NULL, CAJA = NULL)
+  data <- reactiveValues(LOG = NULL, CAJA = NULL)
   update_data <- function() {
-    data$OPT <- update_opt_fuente()
+    #data$OPT <- update_opt_fuente()
     data$CAJA <- update_caja_fuente()
     #data$RF <- update_google_sheets_RF()
     data$LOG <- update_mysql_login()
@@ -350,10 +350,6 @@ server <- function(input, output, session) {
   
   update_login <- function() {
     data$LOG <- update_mysql_login()
-  }
-  
-  update_dataOPT <- function() {
-    data$OPT <- update_opt_fuente()
   }
   
   update_dataCAJA <- function() {
@@ -404,8 +400,7 @@ server <- function(input, output, session) {
       input_password_hash <- digest(input$password, algo = "md5", serialize = FALSE)
       
       if (input_password_hash == db_password_hash) {
-        if (input$user_name %in% c("admin","ccruzj","vmazaneth","alfred_c_1@icloud.com",
-                                   "Idelmoral")) {
+        if (input$user_name %in% c("admin","ccruzj","vmazaneth")) {
           user$authenticated <- TRUE
           user$name <- data$LOG$name[data$LOG$name == input$user_name]  # Almacenar el nombre de usuario
           
@@ -509,9 +504,9 @@ server <- function(input, output, session) {
           tags$img(src = "https://clinicalafuente.com/favicon.png", height = 50, width = 50),
           tags$h4("Se actualizó análisis Optica Fuente", style = "margin-top: 7px; margin-right: auto; margin-left: auto;")
         ),
-        HTML("Actualizado el 27/01/2026<br>
-           Ahora puedes visualizar los resultados de los procesos de óptica en la interfaz
-           Recuerda llenar la información del sistema para ver los resultados<br>
+        HTML("Actualizado el 06/04/2026<br>
+           Ahora puedes visualizar los resultados de los procesos de CAJA en la interfaz
+           Recuerda solicitar actualización de datos<br>
            <strong>PRUEBALO!!!</strong><br><br>
            Atte: Lic. Kevin Haquehua"),
         easyClose = TRUE,
@@ -581,7 +576,7 @@ server <- function(input, output, session) {
     removeModal()
   })
   
-  filtered_data_OPT <- reactive({
+  filtered_data_GRUPO <- reactive({
     
     # Filtrar las fechas
     selected_date_receta <- input$selectDate_Receta
