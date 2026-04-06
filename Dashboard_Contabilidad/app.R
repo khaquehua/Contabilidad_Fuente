@@ -43,167 +43,27 @@ etiquetas3 <- function(x) {
 meses_es <- c("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
               "Julio", "Agosto", "Septiembre", "Octubre","Noviembre","Diciembre")
 
-# READ QX DATA
-update_opt_fuente <- function() {
-  # VERIFICAR
-  dbfuente <- dbConnect(MySQL(), user="kevin1", host="192.168.50.45", 
-                        password="NomH3-avJFoapBVN", dbname="plantilla_oft")
-  
-  # Recetas
-  receta <- dbGetQuery(dbfuente, statement = "SELECT nro_receta, nhcl, nombre, edad, optometra,
-                     reg_receta from plantilla_oft.t_optica_recetas
-                     where reg_receta >= '2025-03-01'")
-  
-  # Cotización
-  coti <- dbGetQuery(dbfuente, statement = "SELECT nro_cotizacion, nro_receta, nhcl, edad,
-                   detalles as detalles_cotizacion, usuario as usuario_cotizacion, 
-                   reg_cotizacion, estatus from plantilla_oft.t_optica_cotizaciones
-                   where reg_cotizacion >= '2025-03-01'")
-  
-  # Orden de pago
-  orden <- dbGetQuery(dbfuente, statement = "SELECT nro_orden, nro_cotizacion, 
-                    tipluna, tipmateriales, propiedades, costo, detalles as detalles_orden, 
-                    usuario as usuario_orden, fecha_op, 
-                    laboratorio, total, adelanto, saldo, tipo_montura, codigo, color
-                    from plantilla_oft.t_optica_ordenes_pedido where reg_op >= '2025-03-01'")
-  
-  # Caja Sistema
-  caja_s <- dbGetQuery(dbfuente, statement = "SELECT id_cita, precio,
-                     adelanto, created_at, updated_at, send_at, usuario_editor, codigo_precios_caja
-                     from plantilla_oft.precios_cita where tipo_cita = 'optica' and borrado = 0")
-  
-  # Filtrar las fechas
-  caja_s$created_at <- as.Date(caja_s$created_at)
-  
-  # UNION DE BASES DE DATOS
-  # Receta - Cotizacion
-  rec_coti <- merge(x = receta, y = coti, by = "nro_receta", all.x = TRUE)
-  # Evaluar coincidencias
-  rec_coti$nhcl_q <- ifelse(rec_coti$nhcl.x == rec_coti$nhcl.y, "Igual", "Nicas")
-  rec_coti$edad <- ifelse(rec_coti$edad.x == 0 | rec_coti$edad.x > 100, rec_coti$edad.y,
-                          ifelse(rec_coti$edad.y == 0 | rec_coti$edad.y > 100, rec_coti$edad.x, rec_coti$edad.y))
-  
-  rec_coti <- rec_coti %>% filter(is.na(nhcl_q) | nhcl_q == "Igual") %>%
-    select(nro_cotizacion, nro_receta, nhcl = nhcl.x, nombre, edad, optometra, 
-           reg_receta, reg_cotizacion, detalles_cotizacion, usuario_cotizacion, estatus)
-  
-  # Seleccionar variables de interés
-  rec_coti$reg_receta <- as.Date(rec_coti$reg_receta)
-  rec_coti$reg_cotizacion <- as.Date(rec_coti$reg_cotizacion)
-  
-  rec_coti$dias_diferencia <- as.numeric(
-    rec_coti$reg_cotizacion - rec_coti$reg_receta
-  )
-  
-  rec_coti$Tiene_cotizacion <- ifelse(is.na(rec_coti$reg_cotizacion), "No", "Si")
-  
-  # Cotizacion - orden
-  rec_coti_orden <- merge(x = rec_coti, y = orden, by = "nro_cotizacion", all.x = TRUE)
-  
-  #:::::::        IMPORTANTE     ::::::::::::::
-  # ESTATUS INDICA SI SE REALIZA O NO LA ORDEN
-  
-  # Todos los ids iguales
-  # UNIR CON LOS DATOS DE CAJA
-  datas <- merge(x = rec_coti_orden, y = caja_s, by.x = "nro_orden", by.y = "id_cita", all.x = TRUE)
-  
-  # Filtrar los adelantos no colocados
-  datas <- datas %>% filter(is.na(adelanto.y) | adelanto.y != "no")
-  
-  # Ahora seleccionamos las variables de interés
-  datas <- datas %>% select(nro_receta, reg_receta, nhcl, nombre, edad, optometra, Tiene_cotizacion,
-                          nro_cotizacion, reg_cotizacion, detalles_cotizacion, usuario_cotizacion,
-                          nro_orden, estatus, tipluna, tipmateriales, propiedades, costo, detalles_orden,
-                          usuario_orden, fecha_op, laboratorio, total, tipo_montura, codigo, color, 
-                          precio, pago_caja = adelanto.y, fecha_pago_caja = created_at, usuario_editor)
-  
-  # Tiene orden es estatus
-  datas$Tiene_pago <- ifelse(is.na(datas$pago_caja), "No", "Si")
-  datas$fecha_op <- as.Date(datas$fecha_op)
-  
-  datas$Dias_rec_cot <- as.numeric(
-    datas$reg_cotizacion - datas$reg_receta
-  )
-  
-  datas$Dias_cot_ord <- as.numeric(
-    datas$fecha_op - datas$reg_cotizacion
-  )
-  
-  datas$Dias_ord_pag <- as.numeric(
-    datas$fecha_pago_caja - datas$fecha_op
-  )
-  
-  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-  #::::::::::::::::::::      LIMPIEZA DE LOS DATOS       :::::::::::::::::::::::
-  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-  
-  # Se limpia que no tiene cotizacion
-  datas$estatus <- ifelse(is.na(datas$estatus), "NO TIENE", datas$estatus)
-  
-  # Se limpia el usuario que realiza la cotizacion
-  datas$usuario_cotizacion <- ifelse(is.na(datas$usuario_cotizacion),"No Registro",datas$usuario_cotizacion)
-  datas$usuario_cotizacion <- ifelse(datas$usuario_cotizacion %in% c("JSARZO","jsarzo"),"Jhonatan Sarzo",
-                                     ifelse(datas$usuario_cotizacion %in% c("LCCAMA","LCCAMa","Lccama","lccama"),"Luis Ccama",
-                                            ifelse(datas$usuario_cotizacion %in% c("idelmoral"),"Isamar del Moral", datas$usuario_cotizacion)))
-  
-  # Se limpia el usuario que realiza la orden
-  datas$usuario_orden <- ifelse(is.na(datas$usuario_orden),"No Registro",datas$usuario_orden)
-  datas$usuario_orden <- ifelse(datas$usuario_orden %in% c("JSARZO","jsarzo"),"Jhonatan Sarzo",
-                                ifelse(datas$usuario_orden %in% c("LCCAMA","LCCAMa","Lccama","lccama","lccama "),"Luis Ccama",
-                                       ifelse(datas$usuario_orden %in% c("idelmoral"),"Isamar del Moral", datas$usuario_orden)))
-  
-  # Tipo luna cotizacion
-  datas$tipluna <- ifelse(is.na(datas$tipluna),"No Registro",datas$tipluna)
-  datas$tipluna <- ifelse(datas$tipluna == "-----","No Registro",datas$tipluna)
-  
-  # Tipo materiales cotizacion
-  datas$tipmateriales <- ifelse(is.na(datas$tipmateriales),"No Registro",datas$tipmateriales)
-  datas$tipmateriales <- ifelse(datas$tipmateriales == "-----","No Registro",datas$tipmateriales)
-  
-  # Tipo propiedades cotizacion
-  datas$propiedades <- ifelse(is.na(datas$propiedades),"No Registro",datas$propiedades)
-  datas$propiedades <- ifelse(datas$propiedades == "-----","No Registro",datas$propiedades)
-  
-  # Laboratorio orden
-  datas$laboratorio <- ifelse(is.na(datas$laboratorio),"No Registro",datas$laboratorio)
-  
-  # Tipo montura orden
-  datas$tipo_montura <- ifelse(is.na(datas$tipo_montura),"No Registro",datas$tipo_montura)
-  
-  # Color orden
-  datas$color <- ifelse(is.na(datas$color),"No Registro",datas$color)
-  
-  # Usuario editor
-  datas$usuario_editor <- ifelse(is.na(datas$usuario_editor) | datas$usuario_editor == "","No Registro",
-                                 ifelse(datas$usuario_editor %in% c("caja","CAJA"),"CAJA",
-                                        ifelse(datas$usuario_editor %in% c("farmacia","FARMACIA"),"FARMACIA",
-                                               ifelse(datas$usuario_editor %in% c("jticuna"),"Josue Ticuña",
-                                                      ifelse(datas$usuario_editor %in% c("spaty"),"Pati",datas$usuario_editor)))))
-  
-  dbDisconnect(dbfuente)
-  return(datas)
-}
-
-# Sistema de caja
+# READ data de caja
 update_caja_fuente <- function() {
   # VERIFICAR
   # Llamar los datos de caja
   dbcaja <- dbConnect(MySQL(), user="kevin1", host="192.168.50.45", password="NomH3-avJFoapBVN", dbname="facturacion_fuente")
-  factura <- dbGetQuery(dbcaja, statement = "SELECT tipo, serie, numero, codigo, nombre, fecha, total from factura where fecha >= '2025-03-01'")
+  factura <- dbGetQuery(dbcaja, statement = "SELECT tipo, serie, numero, codigo, nombre, fecha, total from factura where fecha >= '2025-01-01'")
   dfactura <- dbGetQuery(dbcaja, statement = "SELECT serie, numero, producto, descripcion, cantidad, 
-                         precio, total from detalle_factura
-                         WHERE producto BETWEEN 600 AND 608;")
+                         precio, total from detalle_factura")
   
   # Generar ID de merge
   factura$ID <- paste0(factura$serie,"-",factura$numero)
   dfactura$ID <- paste0(dfactura$serie,"-",dfactura$numero)
   
+  # Cambiar nombre
+  factura <- factura %>% select(ID, tipo, codigo, nombre, fecha, total_boleta = total)
+  dfactura <- dfactura %>% select(ID, producto, descripcion, cantidad_prod = cantidad, pu = precio, cantidad_pu = total)
+  
   # Unamos la data de caja
   caja <- merge(x = factura, y = dfactura, by = "ID")
   
-  caja <- caja %>% select(ID, fecha, codigo, nombre, boleta_total = total.x, 
-                          producto, descripcion, cantidad, precio, 
-                          producto_total = total.y) %>%
+  caja <- caja %>%
     filter(!descripcion %in% c("NO FACTURAR","AYUDA ELECT. (BV)"))
   
   # Preprocesamiento
@@ -211,10 +71,18 @@ update_caja_fuente <- function() {
   caja$fecha <- as.Date(caja$fecha)
   
   # Descripcion
-  caja$descripcion <- ifelse(caja$descripcion %in% c("LIQ. LIMPIADOR DE LENTES","OPT. LUIQUIDO LENTES CONT.","OPT. LUIQUIDO LENTES CONT.","OPT. LIQUIDO LENTES CONT."),"LIQUIDO LIMPIADOR LENTES",
-                             ifelse(caja$descripcion %in% c("OPT. MONTURA","OPT. MONTURAL"),"MONTURAS",caja$descripcion))
+  #caja$descripcion <- ifelse(caja$descripcion %in% c("LIQ. LIMPIADOR DE LENTES","OPT. LUIQUIDO LENTES CONT.","OPT. LUIQUIDO LENTES CONT.","OPT. LIQUIDO LENTES CONT."),"LIQUIDO LIMPIADOR LENTES",
+  #                           ifelse(caja$descripcion %in% c("OPT. MONTURA","OPT. MONTURAL"),"MONTURAS",caja$descripcion))
   
   dbDisconnect(dbcaja)
+  
+  # Leer datos del Excel
+  productos <- read_excel("productos.xlsx")
+  caja <- merge(x = caja, y = productos, by.x = 'producto', by.y = 'PRODUCTO', all.x = TRUE)
+  
+  # Filtrar
+  ver <- caja %>% filter(is.na(DESCORTO)) %>% group_by(producto, DESCORTO, FAMILIA) %>% summarise(Cantidad = n())
+  
   return(caja)
 }
 
