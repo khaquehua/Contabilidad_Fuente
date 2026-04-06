@@ -80,8 +80,15 @@ update_caja_fuente <- function() {
   productos <- read_excel("productos.xlsx")
   caja <- merge(x = caja, y = productos, by.x = 'producto', by.y = 'PRODUCTO', all.x = TRUE)
   
-  # Filtrar
-  ver <- caja %>% filter(is.na(DESCORTO)) %>% group_by(producto, DESCORTO, FAMILIA) %>% summarise(Cantidad = n())
+  caja$DESCORTO <- ifelse(is.na(caja$DESCORTO), caja$descripcion, caja$DESCORTO)
+  
+  ver <- caja %>% filter(is.na(FAMILIA)) %>% group_by(DESCORTO) %>% summarise(Cantidad = n())
+  
+  caja$FAMILIA <- ifelse(caja$DESCORTO %in% c("EE - ULTRABIOM (UBM)","EE. INLASER OCT CEL GANGLIONARES",
+                                              "EE. INLASER OSIRIS"),"REFRACTIVA",
+                         ifelse(caja$DESCORTO %in% c("EST. LENTES"), "OPTICA",
+                                ifelse(caja$DESCORTO %in% c("EXAMEN ESP OFTALM OCT CELULAS GLANGLIONARES"),"OFTALMOLOGIA",
+                                       ifelse(caja$DESCORTO %in% c("")))))
   
   return(caja)
 }
