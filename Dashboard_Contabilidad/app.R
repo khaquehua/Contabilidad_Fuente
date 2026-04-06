@@ -82,18 +82,25 @@ update_caja_fuente <- function() {
   
   caja$DESCORTO <- ifelse(is.na(caja$DESCORTO), caja$descripcion, caja$DESCORTO)
   
-  ver <- caja %>% filter(is.na(FAMILIA)) %>% group_by(DESCORTO) %>% summarise(Cantidad = n())
+  caja$FAMILIA <- ifelse(caja$producto == "113" & is.na(caja$FAMILIA), "OPTICA", caja$FAMILIA)
+  caja$FAMILIA <- ifelse(caja$producto == "115" & is.na(caja$FAMILIA), "OFTALMOLOGIA", caja$FAMILIA)
+  caja$FAMILIA <- ifelse(is.na(caja$FAMILIA), "FARMACIA", caja$FAMILIA)
   
-  caja$FAMILIA <- ifelse(caja$DESCORTO %in% c("EE - ULTRABIOM (UBM)","EE. INLASER OCT CEL GANGLIONARES",
-                                              "EE. INLASER OSIRIS"),"REFRACTIVA",
-                         ifelse(caja$DESCORTO %in% c("EST. LENTES"), "OPTICA",
-                                ifelse(caja$DESCORTO %in% c("EXAMEN ESP OFTALM OCT CELULAS GLANGLIONARES",
-                                                            "CERTIFICADO DE DIAGNOSTICO MEDICO",
-                                                            "CERTIFICDO DE DESCANSO MEDICO"),"OFTALMOLOGIA",
-                                       ifelse(caja$DESCORTO %in% c("CIRUGIA FRENILLO LABIAL",
-                                                                   "ENDODONCIA MULTIRADICULAR",
-                                                                   "ENDODONCIA UNIRADICULAR",
-                                                                   "CORONA EN IVOCRON"),"ODONTOLOGIA"))))
+  caja$FAMILIA <- ifelse(caja$FAMILIA == "E. OPT", "OPTICA",
+                         ifelse(caja$FAMILIA == "FARMAC", "FARMACIA",
+                                ifelse(caja$FAMILIA == "GLAUCO", "GLAUCOMA",
+                                       ifelse(caja$FAMILIA == "OCULO", "OCULOPLASTIA",
+                                              ifelse(caja$FAMILIA == "ODONTO", "ODONTOLOGIA",
+                                                     ifelse(caja$FAMILIA == "OFTALM", "OFTALMOLOGIA",
+                                                            ifelse(caja$FAMILIA %in% c("REFRAC", "REFRACTIVA"), "INLASER",caja$FAMILIA)))))))
+  
+  caja$SUBFAMILIA <- ifelse(caja$SUBFAMILIA == "CIRUGÍ", "CIRUGIAS",
+                            ifelse(caja$SUBFAMILIA %in% c("CONST","CONSUL","CONST."), "CONSULTAS",
+                                   ifelse(caja$SUBFAMILIA == "DOCU.", "DOCUMENTOS",
+                                          ifelse(caja$SUBFAMILIA %in% c("EX. ES","EX.ESP","EXAM."),"EXAMENES ESPECIALES",
+                                                 ifelse(caja$SUBFAMILIA %in% c("PROC.","PROC.E","PROCEDIMIENTO"),"PROCEDIMIENTOS ESPECIALES",
+                                                        ifelse(caja$SUBFAMILIA == "ALQUI/","ALQUILER EQUIPOS",caja$SUBFAMILIA))))))
+  
   
   return(caja)
 }
