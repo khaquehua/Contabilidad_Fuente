@@ -119,10 +119,10 @@ update_mysql_login <- function() {
 # Function to create the dashboard user interface
 dashboard_ui <- function() {
   dashboardPage(
-    title = "OPTICA",
+    title = "CONTABILIDAD",
     header = dashboardHeader(
       title = dashboardBrand(
-        title = h4("OPT FUENTE"),
+        title = h4("CONT. FUENTE"),
         href = "https://clinicalafuente.com/",
         image = "https://clinicalafuente.com/favicon.png"
       ),
@@ -160,36 +160,46 @@ dashboard_ui <- function() {
           selected = TRUE # Selecciona tab1 por defecto
         ),
         menuItem(
-          text = "Sistema Óptica",
-          icon = icon("glasses"),
-          startExpanded = FALSE,  # No está expandido por defecto para permitir el comportamiento de expandir/contraer
-          menuSubItem(
-            text = "Análisis",
-            tabName = "subtab2_1",
-            icon = icon("chart-line")
-          )#,
-          #menuSubItem(
-          #  text = "Análisis Individual",
-          #  tabName = "subtab2_2",
-          #  icon = icon("user")
-          #)
-        ),
-        menuItem(
-          text = "Sistema Caja",
-          tabName = "tab3", #No se necesita
+          text = "Análisis Caja",
           icon = icon("cash-register"),
           startExpanded = FALSE,  # No está expandido por defecto para permitir el comportamiento de expandir/contraer
           menuSubItem(
-            text = "Análisis General",
+            text = "Grupo",
+            tabName = "subtab2_1",
+            icon = icon("layer-group")
+          ),
+          menuSubItem(
+            text = "Productos/Servicios",
             tabName = "subtab2_2",
-            icon = icon("chart-line")
-          )#,
+            icon = icon("capsules")
+          ),
+          menuSubItem(
+            text = "Persona",
+            tabName = "subtab2_3",
+            icon = icon("users")
+          ),
+          menuSubItem(
+            text = "KARDEX",
+            tabName = "subtab2_4",
+            icon = icon("file")
+          )
+        )#,
+        #menuItem(
+        #  text = "Sistema Caja",
+        #  tabName = "tab3", #No se necesita
+        #  icon = icon("cash-register"),
+        #  startExpanded = FALSE,  # No está expandido por defecto para permitir el comportamiento de expandir/contraer
+        #  menuSubItem(
+        #    text = "Análisis General",
+        #    tabName = "subtab2_2",
+        #    icon = icon("chart-line")
+        #  )#,
         #  menuSubItem(
         #    text = "Análisis Individual",
         #    tabName = "subtab3_2",
         #    icon = icon("user")
         #  )
-        )#,
+        #)#,
         #menuItem(
         #  text = "Análisis ad1",
           #tabName = "tab4", No se necesita
