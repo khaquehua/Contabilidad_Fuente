@@ -579,43 +579,20 @@ server <- function(input, output, session) {
   filtered_data_GRUPO <- reactive({
     
     # Filtrar las fechas
-    selected_date_receta <- input$selectDate_Receta
+    selected_date_grupo <- input$selectDate_Grupo
     #selected_date_cotizacion <- input$selectDate_Cotizacion
     #selected_date_orden <- input$selectDate_Orden
     #selected_date_caja <- input$selectDate_Caja
-    # Filtrar si tiene
-    selected_tiene_cotizacion <- input$selectTiene_Cotizacion
-    selected_tiene_orden <- input$selectTiene_Orden
-    selected_tiene_caja <- input$selectTiene_Caja
-    # Personas (optometras y usuarios)
-    selected_optometra <- input$selectOptometra
-    selected_usuario_cotizacion <- input$selectUsuario_Cotizacion
-    selected_usuario_orden <- input$selectUsuario_Orden
-    # Caracteristicas cotizacion
-    selected_tipluna <- input$selectTipluna
-    selected_tipmateriales <- input$selectTipmateriales
-    selected_propiedades <- input$selectPropiedades
-    # Caracteristicas orden
-    selected_laboratorio <- input$selectLaboratorio
-    selected_tipmontura <- input$selectTipmontura
-    selected_color <- input$selectColor
+    # Filtrar familia y subfamilia
+    selected_familia <- input$selectFamilia
+    selected_subfamilia <- input$selectSubfamilia
     
-    filtered <- data$OPT
+    filtered <- data$CAJA
     
     # Verificar si al menos un filtro está activado
     any_filter_selected <- any(c(
-      length(selected_tiene_cotizacion) > 1,
-      length(selected_tiene_orden) > 1,
-      length(selected_tiene_caja) > 1,
-      length(selected_optometra) > 1,
-      length(selected_usuario_cotizacion) > 1,
-      length(selected_usuario_orden) > 1,
-      length(selected_tipluna) > 1,
-      length(selected_tipmateriales) > 1,
-      length(selected_propiedades) > 1,
-      length(selected_laboratorio) > 1,
-      length(selected_tipmontura) > 1,
-      length(selected_color) > 1,
+      length(selected_familia) > 1,
+      length(selected_subfamilia) > 1,
       !is.null(selected_date_receta)#,
       #!is.null(selected_date_cotizacion),
       #!is.null(selected_date_orden),
@@ -624,14 +601,14 @@ server <- function(input, output, session) {
     
     if (any_filter_selected) {
       # Aplicar los filtros solo si al menos uno está seleccionado
-      filtered <- data$OPT
+      filtered <- data$CAJA
       
-      if (!"Todos" %in% selected_tiene_cotizacion) {
-        filtered <- filtered[filtered$Tiene_cotizacion %in% selected_tiene_cotizacion, ]
+      if (!"Todos" %in% selected_familia) {
+        filtered <- filtered[filtered$FAMILIA %in% selected_familia, ]
       }
       
-      if (!"Todos" %in% selected_tiene_orden) {
-        filtered <- filtered[filtered$estatus %in% selected_tiene_orden, ]
+      if (!"Todos" %in% selected_subfamilia) {
+        filtered <- filtered[filtered$SUBFAMILIA %in% selected_subfamilia, ]
       }
       
       if (!"Todos" %in% selected_tiene_caja) {
