@@ -48,7 +48,7 @@ update_caja_fuente <- function() {
   # VERIFICAR
   # Llamar los datos de caja
   dbcaja <- dbConnect(MySQL(), user="kevin1", host="192.168.50.45", password="NomH3-avJFoapBVN", dbname="facturacion_fuente")
-  factura <- dbGetQuery(dbcaja, statement = "SELECT tipo, serie, numero, codigo, nombre, fecha, total from factura where fecha >= '2025-01-01'")
+  factura <- dbGetQuery(dbcaja, statement = "SELECT tipo, serie, numero, codigo, nombre, fecha, total from factura where fecha >= '2025-05-01'")
   dfactura <- dbGetQuery(dbcaja, statement = "SELECT serie, numero, producto, descripcion, cantidad, 
                          precio, total from detalle_factura")
   
@@ -87,8 +87,13 @@ update_caja_fuente <- function() {
   caja$FAMILIA <- ifelse(caja$DESCORTO %in% c("EE - ULTRABIOM (UBM)","EE. INLASER OCT CEL GANGLIONARES",
                                               "EE. INLASER OSIRIS"),"REFRACTIVA",
                          ifelse(caja$DESCORTO %in% c("EST. LENTES"), "OPTICA",
-                                ifelse(caja$DESCORTO %in% c("EXAMEN ESP OFTALM OCT CELULAS GLANGLIONARES"),"OFTALMOLOGIA",
-                                       ifelse(caja$DESCORTO %in% c("")))))
+                                ifelse(caja$DESCORTO %in% c("EXAMEN ESP OFTALM OCT CELULAS GLANGLIONARES",
+                                                            "CERTIFICADO DE DIAGNOSTICO MEDICO",
+                                                            "CERTIFICDO DE DESCANSO MEDICO"),"OFTALMOLOGIA",
+                                       ifelse(caja$DESCORTO %in% c("CIRUGIA FRENILLO LABIAL",
+                                                                   "ENDODONCIA MULTIRADICULAR",
+                                                                   "ENDODONCIA UNIRADICULAR",
+                                                                   "CORONA EN IVOCRON"),"ODONTOLOGIA"))))
   
   return(caja)
 }
