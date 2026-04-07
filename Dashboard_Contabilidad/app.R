@@ -611,464 +611,8 @@ server <- function(input, output, session) {
         filtered <- filtered[filtered$SUBFAMILIA %in% selected_subfamilia, ]
       }
       
-      if (!"Todos" %in% selected_tiene_caja) {
-        filtered <- filtered[filtered$Tiene_pago %in% selected_tiene_caja, ]
-      }
-      
-      if (!"Todos" %in% selected_optometra) {
-        filtered <- filtered[filtered$optometra %in% selected_optometra, ]
-      }
-      
-      if (!"Todos" %in% selected_usuario_cotizacion) {
-        filtered <- filtered[filtered$usuario_cotizacion %in% selected_usuario_cotizacion, ]
-      }
-  
-      if (!"Todos" %in% selected_usuario_orden) {
-        filtered <- filtered[filtered$usuario_orden %in% selected_usuario_orden, ]
-      }
-      
-      if (!"Todos" %in% selected_tipluna) {
-        filtered <- filtered[filtered$tipluna %in% selected_tipluna, ]
-      }
-      
-      if (!"Todos" %in% selected_tipmateriales) {
-        filtered <- filtered[filtered$tipmateriales %in% selected_tipmateriales, ]
-      }
-      
-      if (!"Todos" %in% selected_propiedades) {
-        filtered <- filtered[filtered$propiedades %in% selected_propiedades, ]
-      }
-      
-      if (!"Todos" %in% selected_laboratorio) {
-        filtered <- filtered[filtered$laboratorio %in% selected_laboratorio, ]
-      }
-      
-      if (!"Todos" %in% selected_tipmontura) {
-        filtered <- filtered[filtered$tipo_montura %in% selected_tipmontura, ]
-      }
-      
-      if (!"Todos" %in% selected_color) {
-        filtered <- filtered[filtered$color %in% selected_color, ]
-      }
-      
-      if (!is.null(selected_date_receta)) {
-        filtered <- filtered[filtered$reg_receta >= selected_date_receta[1] & filtered$reg_receta <= selected_date_receta[2], ]
-      }
-      
-      #if (!is.null(selected_date_cotizacion)) {
-      #  filtered <- filtered[filtered$reg_cotizacion >= selected_date_cotizacion[1] & filtered$reg_cotizacion <= selected_date_cotizacion[2], ]
-      #}
-      
-      #if (!is.null(selected_date_orden)) {
-      #  filtered <- filtered[filtered$fecha_op >= selected_date_orden[1] & filtered$fecha_op <= selected_date_orden[2], ]
-      #}
-      
-      #if (!is.null(selected_date_caja)) {
-      #  filtered <- filtered[filtered$fecha_pago_caja >= selected_date_caja[1] & filtered$fecha_pago_caja <= selected_date_caja[2], ]
-      #}
-      
-    } else {
-      filtered <- data$OPT
-    }
-    
-    return(filtered)
-  })
-  
-  filtered_data_OPT2 <- reactive({
-    
-    # Filtrar las fechas
-    selected_date_receta <- input$selectDate_Receta
-    selected_date_cotizacion <- input$selectDate_Cotizacion
-    #selected_date_orden <- input$selectDate_Orden
-    #selected_date_caja <- input$selectDate_Caja
-    # Filtrar si tiene
-    selected_tiene_cotizacion <- input$selectTiene_Cotizacion
-    selected_tiene_orden <- input$selectTiene_Orden
-    selected_tiene_caja <- input$selectTiene_Caja
-    # Personas (optometras y usuarios)
-    selected_optometra <- input$selectOptometra
-    selected_usuario_cotizacion <- input$selectUsuario_Cotizacion
-    selected_usuario_orden <- input$selectUsuario_Orden
-    # Caracteristicas cotizacion
-    selected_tipluna <- input$selectTipluna
-    selected_tipmateriales <- input$selectTipmateriales
-    selected_propiedades <- input$selectPropiedades
-    # Caracteristicas orden
-    selected_laboratorio <- input$selectLaboratorio
-    selected_tipmontura <- input$selectTipmontura
-    selected_color <- input$selectColor
-    
-    filtered <- data$OPT
-    
-    # Verificar si al menos un filtro está activado
-    any_filter_selected <- any(c(
-      length(selected_tiene_cotizacion) > 1,
-      length(selected_tiene_orden) > 1,
-      length(selected_tiene_caja) > 1,
-      length(selected_optometra) > 1,
-      length(selected_usuario_cotizacion) > 1,
-      length(selected_usuario_orden) > 1,
-      length(selected_tipluna) > 1,
-      length(selected_tipmateriales) > 1,
-      length(selected_propiedades) > 1,
-      length(selected_laboratorio) > 1,
-      length(selected_tipmontura) > 1,
-      length(selected_color) > 1,
-      !is.null(selected_date_receta),
-      !is.null(selected_date_cotizacion)#,
-      #!is.null(selected_date_orden),
-      #!is.null(selected_date_caja)
-    ))
-    
-    if (any_filter_selected) {
-      # Aplicar los filtros solo si al menos uno está seleccionado
-      filtered <- data$OPT
-      
-      if (!"Todos" %in% selected_tiene_cotizacion) {
-        filtered <- filtered[filtered$Tiene_cotizacion %in% selected_tiene_cotizacion, ]
-      }
-      
-      if (!"Todos" %in% selected_tiene_orden) {
-        filtered <- filtered[filtered$estatus %in% selected_tiene_orden, ]
-      }
-      
-      if (!"Todos" %in% selected_tiene_caja) {
-        filtered <- filtered[filtered$Tiene_pago %in% selected_tiene_caja, ]
-      }
-      
-      if (!"Todos" %in% selected_optometra) {
-        filtered <- filtered[filtered$optometra %in% selected_optometra, ]
-      }
-      
-      if (!"Todos" %in% selected_usuario_cotizacion) {
-        filtered <- filtered[filtered$usuario_cotizacion %in% selected_usuario_cotizacion, ]
-      }
-      
-      if (!"Todos" %in% selected_usuario_orden) {
-        filtered <- filtered[filtered$usuario_orden %in% selected_usuario_orden, ]
-      }
-      
-      if (!"Todos" %in% selected_tipluna) {
-        filtered <- filtered[filtered$tipluna %in% selected_tipluna, ]
-      }
-      
-      if (!"Todos" %in% selected_tipmateriales) {
-        filtered <- filtered[filtered$tipmateriales %in% selected_tipmateriales, ]
-      }
-      
-      if (!"Todos" %in% selected_propiedades) {
-        filtered <- filtered[filtered$propiedades %in% selected_propiedades, ]
-      }
-      
-      if (!"Todos" %in% selected_laboratorio) {
-        filtered <- filtered[filtered$laboratorio %in% selected_laboratorio, ]
-      }
-      
-      if (!"Todos" %in% selected_tipmontura) {
-        filtered <- filtered[filtered$tipo_montura %in% selected_tipmontura, ]
-      }
-      
-      if (!"Todos" %in% selected_color) {
-        filtered <- filtered[filtered$color %in% selected_color, ]
-      }
-      
-      if (!is.null(selected_date_receta)) {
-        filtered <- filtered[filtered$reg_receta >= selected_date_receta[1] & filtered$reg_receta <= selected_date_receta[2], ]
-      }
-      
-      if (!is.null(selected_date_cotizacion)) {
-        filtered <- filtered[filtered$reg_cotizacion >= selected_date_cotizacion[1] & filtered$reg_cotizacion <= selected_date_cotizacion[2], ]
-      }
-      
-      #if (!is.null(selected_date_orden)) {
-      #  filtered <- filtered[filtered$fecha_op >= selected_date_orden[1] & filtered$fecha_op <= selected_date_orden[2], ]
-      #}
-      
-      #if (!is.null(selected_date_caja)) {
-      #  filtered <- filtered[filtered$fecha_pago_caja >= selected_date_caja[1] & filtered$fecha_pago_caja <= selected_date_caja[2], ]
-      #}
-      
-    } else {
-      filtered <- data$OPT
-    }
-    
-    return(filtered)
-  })
-  
-  filtered_data_OPT3 <- reactive({
-    
-    # Filtrar las fechas
-    selected_date_receta <- input$selectDate_Receta
-    selected_date_cotizacion <- input$selectDate_Cotizacion
-    selected_date_orden <- input$selectDate_Orden
-    #selected_date_caja <- input$selectDate_Caja
-    # Filtrar si tiene
-    selected_tiene_cotizacion <- input$selectTiene_Cotizacion
-    selected_tiene_orden <- input$selectTiene_Orden
-    selected_tiene_caja <- input$selectTiene_Caja
-    # Personas (optometras y usuarios)
-    selected_optometra <- input$selectOptometra
-    selected_usuario_cotizacion <- input$selectUsuario_Cotizacion
-    selected_usuario_orden <- input$selectUsuario_Orden
-    # Caracteristicas cotizacion
-    selected_tipluna <- input$selectTipluna
-    selected_tipmateriales <- input$selectTipmateriales
-    selected_propiedades <- input$selectPropiedades
-    # Caracteristicas orden
-    selected_laboratorio <- input$selectLaboratorio
-    selected_tipmontura <- input$selectTipmontura
-    selected_color <- input$selectColor
-    
-    filtered <- data$OPT
-    
-    # Verificar si al menos un filtro está activado
-    any_filter_selected <- any(c(
-      length(selected_tiene_cotizacion) > 1,
-      length(selected_tiene_orden) > 1,
-      length(selected_tiene_caja) > 1,
-      length(selected_optometra) > 1,
-      length(selected_usuario_cotizacion) > 1,
-      length(selected_usuario_orden) > 1,
-      length(selected_tipluna) > 1,
-      length(selected_tipmateriales) > 1,
-      length(selected_propiedades) > 1,
-      length(selected_laboratorio) > 1,
-      length(selected_tipmontura) > 1,
-      length(selected_color) > 1,
-      !is.null(selected_date_receta),
-      !is.null(selected_date_cotizacion),
-      !is.null(selected_date_orden)#,
-      #!is.null(selected_date_caja)
-    ))
-    
-    if (any_filter_selected) {
-      # Aplicar los filtros solo si al menos uno está seleccionado
-      filtered <- data$OPT
-      
-      if (!"Todos" %in% selected_tiene_cotizacion) {
-        filtered <- filtered[filtered$Tiene_cotizacion %in% selected_tiene_cotizacion, ]
-      }
-      
-      if (!"Todos" %in% selected_tiene_orden) {
-        filtered <- filtered[filtered$estatus %in% selected_tiene_orden, ]
-      }
-      
-      if (!"Todos" %in% selected_tiene_caja) {
-        filtered <- filtered[filtered$Tiene_pago %in% selected_tiene_caja, ]
-      }
-      
-      if (!"Todos" %in% selected_optometra) {
-        filtered <- filtered[filtered$optometra %in% selected_optometra, ]
-      }
-      
-      if (!"Todos" %in% selected_usuario_cotizacion) {
-        filtered <- filtered[filtered$usuario_cotizacion %in% selected_usuario_cotizacion, ]
-      }
-      
-      if (!"Todos" %in% selected_usuario_orden) {
-        filtered <- filtered[filtered$usuario_orden %in% selected_usuario_orden, ]
-      }
-      
-      if (!"Todos" %in% selected_tipluna) {
-        filtered <- filtered[filtered$tipluna %in% selected_tipluna, ]
-      }
-      
-      if (!"Todos" %in% selected_tipmateriales) {
-        filtered <- filtered[filtered$tipmateriales %in% selected_tipmateriales, ]
-      }
-      
-      if (!"Todos" %in% selected_propiedades) {
-        filtered <- filtered[filtered$propiedades %in% selected_propiedades, ]
-      }
-      
-      if (!"Todos" %in% selected_laboratorio) {
-        filtered <- filtered[filtered$laboratorio %in% selected_laboratorio, ]
-      }
-      
-      if (!"Todos" %in% selected_tipmontura) {
-        filtered <- filtered[filtered$tipo_montura %in% selected_tipmontura, ]
-      }
-      
-      if (!"Todos" %in% selected_color) {
-        filtered <- filtered[filtered$color %in% selected_color, ]
-      }
-      
-      if (!is.null(selected_date_receta)) {
-        filtered <- filtered[filtered$reg_receta >= selected_date_receta[1] & filtered$reg_receta <= selected_date_receta[2], ]
-      }
-      
-      if (!is.null(selected_date_cotizacion)) {
-        filtered <- filtered[filtered$reg_cotizacion >= selected_date_cotizacion[1] & filtered$reg_cotizacion <= selected_date_cotizacion[2], ]
-      }
-      
-      if (!is.null(selected_date_orden)) {
-        filtered <- filtered[filtered$fecha_op >= selected_date_orden[1] & filtered$fecha_op <= selected_date_orden[2], ]
-      }
-      
-      #if (!is.null(selected_date_caja)) {
-      #  filtered <- filtered[filtered$fecha_pago_caja >= selected_date_caja[1] & filtered$fecha_pago_caja <= selected_date_caja[2], ]
-      #}
-      
-    } else {
-      filtered <- data$OPT
-    }
-    
-    return(filtered)
-  })
-  
-  filtered_data_OPT4 <- reactive({
-    
-    # Filtrar las fechas
-    selected_date_receta <- input$selectDate_Receta
-    selected_date_cotizacion <- input$selectDate_Cotizacion
-    selected_date_orden <- input$selectDate_Orden
-    selected_date_caja <- input$selectDate_Caja
-    # Filtrar si tiene
-    selected_tiene_cotizacion <- input$selectTiene_Cotizacion
-    selected_tiene_orden <- input$selectTiene_Orden
-    selected_tiene_caja <- input$selectTiene_Caja
-    # Personas (optometras y usuarios)
-    selected_optometra <- input$selectOptometra
-    selected_usuario_cotizacion <- input$selectUsuario_Cotizacion
-    selected_usuario_orden <- input$selectUsuario_Orden
-    # Caracteristicas cotizacion
-    selected_tipluna <- input$selectTipluna
-    selected_tipmateriales <- input$selectTipmateriales
-    selected_propiedades <- input$selectPropiedades
-    # Caracteristicas orden
-    selected_laboratorio <- input$selectLaboratorio
-    selected_tipmontura <- input$selectTipmontura
-    selected_color <- input$selectColor
-    
-    filtered <- data$OPT
-    
-    # Verificar si al menos un filtro está activado
-    any_filter_selected <- any(c(
-      length(selected_tiene_cotizacion) > 1,
-      length(selected_tiene_orden) > 1,
-      length(selected_tiene_caja) > 1,
-      length(selected_optometra) > 1,
-      length(selected_usuario_cotizacion) > 1,
-      length(selected_usuario_orden) > 1,
-      length(selected_tipluna) > 1,
-      length(selected_tipmateriales) > 1,
-      length(selected_propiedades) > 1,
-      length(selected_laboratorio) > 1,
-      length(selected_tipmontura) > 1,
-      length(selected_color) > 1,
-      !is.null(selected_date_receta),
-      !is.null(selected_date_cotizacion),
-      !is.null(selected_date_orden),
-      !is.null(selected_date_caja)
-    ))
-    
-    if (any_filter_selected) {
-      # Aplicar los filtros solo si al menos uno está seleccionado
-      filtered <- data$OPT
-      
-      if (!"Todos" %in% selected_tiene_cotizacion) {
-        filtered <- filtered[filtered$Tiene_cotizacion %in% selected_tiene_cotizacion, ]
-      }
-      
-      if (!"Todos" %in% selected_tiene_orden) {
-        filtered <- filtered[filtered$estatus %in% selected_tiene_orden, ]
-      }
-      
-      if (!"Todos" %in% selected_tiene_caja) {
-        filtered <- filtered[filtered$Tiene_pago %in% selected_tiene_caja, ]
-      }
-      
-      if (!"Todos" %in% selected_optometra) {
-        filtered <- filtered[filtered$optometra %in% selected_optometra, ]
-      }
-      
-      if (!"Todos" %in% selected_usuario_cotizacion) {
-        filtered <- filtered[filtered$usuario_cotizacion %in% selected_usuario_cotizacion, ]
-      }
-      
-      if (!"Todos" %in% selected_usuario_orden) {
-        filtered <- filtered[filtered$usuario_orden %in% selected_usuario_orden, ]
-      }
-      
-      if (!"Todos" %in% selected_tipluna) {
-        filtered <- filtered[filtered$tipluna %in% selected_tipluna, ]
-      }
-      
-      if (!"Todos" %in% selected_tipmateriales) {
-        filtered <- filtered[filtered$tipmateriales %in% selected_tipmateriales, ]
-      }
-      
-      if (!"Todos" %in% selected_propiedades) {
-        filtered <- filtered[filtered$propiedades %in% selected_propiedades, ]
-      }
-      
-      if (!"Todos" %in% selected_laboratorio) {
-        filtered <- filtered[filtered$laboratorio %in% selected_laboratorio, ]
-      }
-      
-      if (!"Todos" %in% selected_tipmontura) {
-        filtered <- filtered[filtered$tipo_montura %in% selected_tipmontura, ]
-      }
-      
-      if (!"Todos" %in% selected_color) {
-        filtered <- filtered[filtered$color %in% selected_color, ]
-      }
-      
-      if (!is.null(selected_date_receta)) {
-        filtered <- filtered[filtered$reg_receta >= selected_date_receta[1] & filtered$reg_receta <= selected_date_receta[2], ]
-      }
-      
-      if (!is.null(selected_date_cotizacion)) {
-        filtered <- filtered[filtered$reg_cotizacion >= selected_date_cotizacion[1] & filtered$reg_cotizacion <= selected_date_cotizacion[2], ]
-      }
-      
-      if (!is.null(selected_date_orden)) {
-        filtered <- filtered[filtered$fecha_op >= selected_date_orden[1] & filtered$fecha_op <= selected_date_orden[2], ]
-      }
-      
-      if (!is.null(selected_date_caja)) {
-        filtered <- filtered[filtered$fecha_pago_caja >= selected_date_caja[1] & filtered$fecha_pago_caja <= selected_date_caja[2], ]
-      }
-      
-    } else {
-      filtered <- data$OPT
-    }
-    
-    return(filtered)
-  })
-  
-  filtered_data_CAJA <- reactive({
-    
-    # Filtrar la fecha
-    selected_caja <- input$selectDate_Caja_caja
-    # Filtrar descripcion
-    selected_descripcion <- input$selectDescripcion
-    # Filtrar nombre
-    selected_nombre <- input$selectNombre
-    
-    filtered <- data$CAJA
-    
-    # Verificar si al menos un filtro está activado
-    any_filter_selected <- any(c(
-      length(selected_descripcion) > 1,
-      length(selected_nombre) > 1,
-      !is.null(selected_caja)
-    ))
-    
-    if (any_filter_selected) {
-      # Aplicar los filtros solo si al menos uno está seleccionado
-      filtered <- data$CAJA
-      
-      if (!"Todos" %in% selected_descripcion) {
-        filtered <- filtered[filtered$descripcion %in% selected_descripcion, ]
-      }
-      
-      if (!"Todos" %in% selected_nombre) {
-        filtered <- filtered[filtered$nombre %in% selected_nombre, ]
-      }
-      
-      if (!is.null(selected_caja)) {
-        filtered <- filtered[filtered$fecha >= selected_caja[1] & filtered$fecha <= selected_caja[2], ]
+      if (!is.null(selected_date_grupo)) {
+        filtered <- filtered[filtered$fecha >= selected_date_grupo[1] & filtered$fecha <= selected_date_grupo[2], ]
       }
       
     } else {
@@ -1078,22 +622,22 @@ server <- function(input, output, session) {
     return(filtered)
   })
   
-  observeEvent(input$updateButtonOPT, {
-    showModal(modalDialog(
-      title = "Actualizando datos Optica",
-      "Por favor espere mientras se actualizan los datos.",
-      easyClose = FALSE,
-      footer = NULL
-    ))
+  #observeEvent(input$updateButtonOPT, {
+  #  showModal(modalDialog(
+  #    title = "Actualizando datos Optica",
+  #    "Por favor espere mientras se actualizan los datos.",
+  #    easyClose = FALSE,
+  #    footer = NULL
+  #  ))
     
-    update_dataOPT()
+  #  update_dataOPT()
     
-    removeModal()
-  })
+  #  removeModal()
+  #})
   
   observeEvent(input$updateButtonCAJA, {
     showModal(modalDialog(
-      title = "Actualizando datos Relación operados",
+      title = "Actualizando datos Caja",
       "Por favor espere mientras se actualizan los datos.",
       easyClose = FALSE,
       footer = NULL
@@ -1108,9 +652,6 @@ server <- function(input, output, session) {
     req(data$LOG)#, data$PR, data$RF, data$QX)
     if (user$authenticated) {
       
-      update_dataOPT()
-      req(data$OPT)
-      
       update_dataCAJA()
       req(data$CAJA)
       
@@ -1120,7 +661,7 @@ server <- function(input, output, session) {
           fluidRow(
             column(
               width = 12,
-              h1("Análisis y control Óptica"),
+              h1("Análisis y control Contabilidad"),
               h3("Objetivo del Proyecto"),
               p("El objetivo del presente dashboard es"),
               tags$ul(
@@ -1152,226 +693,94 @@ server <- function(input, output, session) {
         ),
         tabItem(
           tabName = "subtab2_1",
-          h1("Registro de procedimientos Óptica"),
+          h1("Registro de procedimientos Caja"),
           tags$div(
             style = "border: 2px solid #0aa1c6; padding: 15px; border-radius: 10px; margin-bottom: 15px;",
             h3("Filtros"),
             fluidRow(
-              column(3, tags$div(
+              column(4, tags$div(
                 class = "input-group",
                 tags$span(
                   tags$img(icon("calendar", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Fecha Receta"
+                  " Fecha"
                 ),
-                dateRangeInput("selectDate_Receta", label = NULL, start = min(data$OPT$reg_receta, na.rm = TRUE), 
-                               end = max(data$OPT$reg_receta, na.rm = TRUE))
-              )),
-              column(3, tags$div(
-                class = "input-group",
-                tags$span(
-                  tags$img(icon("calendar", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Fecha Cotización"
-                ),
-                dateRangeInput("selectDate_Cotizacion", label = NULL, start = min(data$OPT$reg_cotizacion, na.rm = TRUE), 
-                               end = max(data$OPT$reg_cotizacion, na.rm = TRUE))
-              )),
-              column(3, tags$div(
-                class = "input-group",
-                tags$span(
-                  tags$img(icon("calendar", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Fecha Orden de Compra"
-                ),
-                dateRangeInput("selectDate_Orden", label = NULL, start = min(data$OPT$fecha_op, na.rm = TRUE), 
-                               end = max(data$OPT$fecha_op, na.rm = TRUE))
-              )),
-              column(3, tags$div(
-                class = "input-group",
-                tags$span(
-                  tags$img(icon("calendar", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Fecha Pago Caja"
-                ),
-                dateRangeInput("selectDate_Caja", label = NULL, start = min(data$OPT$fecha_pago_caja, na.rm = TRUE), 
-                               end = max(data$OPT$fecha_pago_caja, na.rm = TRUE))
-              ))
-            ),
-            fluidRow(
-              column(4, tags$div(
-                class = "input-group",
-                tags$span(
-                  tags$img(icon("hand-holding-hand", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Tiene cotización"
-                ),
-                selectInput("selectTiene_Cotizacion", label = NULL, choices = c("Todos", names(table(data$OPT$Tiene_cotizacion))), selected = "Todos", multiple = TRUE)
+                dateRangeInput("selectDate_Grupo", label = NULL, start = min(data$CAJA$fecha, na.rm = TRUE), 
+                               end = max(data$CAJA$fecha, na.rm = TRUE))
               )),
               column(4, tags$div(
                 class = "input-group",
                 tags$span(
-                  tags$img(icon("handshake", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Tiene orden"
+                  tags$img(icon("hospital", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
+                  " Area"
                 ),
-                selectInput("selectTiene_Orden", label = NULL, choices = c("Todos", names(table(data$OPT$estatus))), selected = "Todos", multiple = TRUE)
+                selectInput("selectFamilia", label = NULL, choices = c("Todos", names(table(data$CAJA$FAMILIA))), selected = "Todos", multiple = TRUE)
               )),
               column(4, tags$div(
                 class = "input-group",
                 tags$span(
-                  tags$img(icon("hand-holding-dollar", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Tiene pago"
+                  tags$img(icon("hospital-user", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
+                  " SubArea"
                 ),
-                selectInput("selectTiene_Caja", label = NULL, choices = c("Todos", names(table(data$OPT$Tiene_pago))), selected = "Todos", multiple = TRUE)
-              ))
-            ),
-            fluidRow(
-              column(4, tags$div(
-                class = "input-group",
-                tags$span(
-                  tags$img(icon("user-doctor", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Optometra"
-                ),
-                selectInput("selectOptometra", label = NULL, choices = c("Todos", names(table(data$OPT$optometra))), selected = "Todos", multiple = TRUE)
-              )),
-              column(4, tags$div(
-                class = "input-group",
-                tags$span(
-                  tags$img(icon("address-book", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Usuario cotización"
-                ),
-                selectInput("selectUsuario_Cotizacion", label = NULL, choices = c("Todos", names(table(data$OPT$usuario_cotizacion))), selected = "Todos", multiple = TRUE)
-              )),
-              column(4, tags$div(
-                class = "input-group",
-                tags$span(
-                  tags$img(icon("id-badge", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Usuario orden"
-                ),
-                selectInput("selectUsuario_Orden", label = NULL, choices = c("Todos", names(table(data$OPT$usuario_orden))), selected = "Todos", multiple = TRUE)
-              ))
-            ),
-            fluidRow(
-              column(4, tags$div(
-                class = "input-group",
-                tags$span(
-                  tags$img(icon("moon", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Seleccione Luna"
-                ),
-                selectInput("selectTipluna", label = NULL, choices = c("Todos", unique(data$OPT$tipluna)), selected = "Todos", multiple = TRUE)
-              )),
-              column(4, tags$div(
-                class = "input-group",
-                tags$span(
-                  tags$img(icon("toolbox", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Seleccione Materiales"
-                ),
-                selectInput("selectTipmateriales", label = NULL, choices = c("Todos", unique(data$OPT$tipmateriales)), selected = "Todos", multiple = TRUE)
-              )),
-              column(4, tags$div(
-                class = "input-group",
-                tags$span(
-                  tags$img(icon("hands-holding-circle", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Seleccione Propiedades"
-                ),
-                selectInput("selectPropiedades", label = NULL, choices = c("Todos", unique(data$OPT$propiedades)), selected = "Todos", multiple = TRUE)
-              ))
-            ),
-            fluidRow(
-              column(4, tags$div(
-                class = "input-group",
-                tags$span(
-                  tags$img(icon("flask-vial", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Seleccione Laboratorio"
-                ),
-                selectInput("selectLaboratorio", label = NULL, choices = c("Todos", unique(data$OPT$laboratorio)), selected = "Todos", multiple = TRUE)
-              )),
-              column(4, tags$div(
-                class = "input-group",
-                tags$span(
-                  tags$img(icon("glasses", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Seleccione Montura"
-                ),
-                selectInput("selectTipmontura", label = NULL, choices = c("Todos", unique(data$OPT$tipo_montura)), selected = "Todos", multiple = TRUE)
-              )),
-              column(4, tags$div(
-                class = "input-group",
-                tags$span(
-                  tags$img(icon("palette", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Seleccione Color"
-                ),
-                selectInput("selectColor", label = NULL, choices = c("Todos", unique(data$OPT$color)), selected = "Todos", multiple = TRUE)
+                selectInput("selectSubfamilia", label = NULL, choices = c("Todos", names(table(data$CAJA$SUBFAMILIA))), selected = "Todos", multiple = TRUE)
               ))
             )
           ),
           fluidRow(
             column(4,
                    div(
-                     actionButton("updateButtonOPT", "Actualizar datos", class = "btn btn-primary")#,
+                     actionButton("updateButtonCAJA", "Actualizar datos", class = "btn btn-primary")#,
                      #id = "updateButton-container"
                    )
             )
           ),
           tags$div(
             style = "border: 2px solid #0aa1c6; padding: 15px; border-radius: 10px; margin-bottom: 15px;",
-            h3("Resultados Generales"),
+            h3("Resultados"),
             br(),
             tabsetPanel(
               id = "tabsetGenerales",
               tabPanel(
                 title = "General",
-                icon = icon("users"),
-                #fluidRow(
-                #  column(12, uiOutput("dynamicTitleRegisterCirugias"))
-                #),
+                icon = icon("industry"),
+                fluidRow(
+                  column(12, uiOutput("dynamicTitleFechaCaja"))
+                ),
                 fluidRow(
                   
-                    column(3, infoBoxOutput("Recetas_realizadas", width = 12)),
-                    column(3, infoBoxOutput("Cotizaciones_realizadas", width = 12)),
-                    column(3, infoBoxOutput("Ordenes_realizadas", width = 12)),
-                    column(3, infoBoxOutput("Pagos_realizados", width = 12))
+                    column(4, infoBoxOutput("Boletas_emitidas_grupo", width = 12)),
+                    column(4, infoBoxOutput("Cantidades_producto_grupo", width = 12)),
+                    column(4, infoBoxOutput("Recaudacion_grupo", width = 12))
                   ,
                   fluidRow(
-                    column(8, 
+                    column(12, 
                            tabBox(
-                             title = "Evolución procesos",
-                             selected = "Recetas (G)",
+                             title = "Evolución costos",
+                             selected = "Costos (G)",
                              status = "primary",
                              solidHeader = FALSE,
                              maximizable = TRUE,
                              width = 12,
                              type = "tabs",
                              tabPanel(
-                               title = "Recetas (G)",
+                               title = "Costos (G)",
                                width = 12,
-                               plotOutput("plotts_recetas", height = "600px")
-                             ),
-                             tabPanel(
-                               title = "Cotizaciones (G)",
-                               width = 12,
-                               plotOutput("plotts_cotizaciones", height = "600px")
-                             ),
-                             tabPanel(
-                               title = "Ordenes (G)",
-                               width = 12,
-                               plotOutput("plotts_ordenes", height = "600px")
-                             ),
-                             tabPanel(
-                               title = "Pagos (G)",
-                               width = 12,
-                               plotOutput("plotts_pagos", height = "600px")
+                               plotOutput("plotts_costos_grupo", height = "600px")
                              ),
                              tabPanel(
                                title = "Tabla resumen",
                                width = 12,
-                               downloadButton("downloadExceltabla_ts", "Descargar Excel"),
-                               dataTableOutput('tabla_ts')
-                             ),
-                             tabPanel(
-                               title = "Tabla recetas",
-                               width = 12,
-                               downloadButton("downloadExceltabla_recetas", "Descargar Excel"),
-                               dataTableOutput('tabla_recetas')
+                               downloadButton("downloadExceltabla_ts_costos_grupo", "Descargar Excel"),
+                               dataTableOutput('tabla_ts_costos_grupo')
                              )
-                           )),
-                    column(4, 
+                           ))
+                  ),
+                  style = "margin-top: 20px;"
+                ),
+                div(
+                  fluidRow(
+                    column(6, 
                            tabBox(
-                             title = "Optometra",
+                             title = "Área",
                              selected = "Grafico",
                              status = "primary",
                              solidHeader = FALSE,
@@ -1381,104 +790,34 @@ server <- function(input, output, session) {
                              tabPanel(
                                title = "Grafico",
                                width = 12,
-                               plotOutput("plotoptometra", height = "600px")
+                               plotOutput("plot_familia_grupo", height = "600px")
                              ),
                              tabPanel(
                                title = "Tabla",
                                width = 12,
-                               downloadButton("downloadExcel_optometra", "Descargar Excel"),
-                               dataTableOutput('tab_optometra')
-                             )
-                           ))
-                  ),
-                  style = "margin-top: 20px;"
-                ),
-                div(
-                  fluidRow(
-                    column(4, 
-                           tabBox(
-                             title = "Cotizaciones",
-                             selected = "Luna (G)",
-                             status = "primary",
-                             solidHeader = FALSE,
-                             maximizable = TRUE,
-                             width = 12,
-                             type = "tabs",
-                             tabPanel(
-                               title = "Luna (G)",
-                               width = 12,
-                               plotOutput("plot_luna", height = "600px")
-                             ),
-                             tabPanel(
-                               title = "Material (G)",
-                               width = 12,
-                               plotOutput("plot_material", height = "600px")
-                             ),
-                             tabPanel(
-                               title = "Propiedad (G)",
-                               width = 12,
-                               plotOutput("plot_propiedad", height = "600px")
-                             ),
-                             tabPanel(
-                               title = "Luna (T)",
-                               width = 12,
-                               downloadButton("downloadExcel_luna", "Descargar Excel"),
-                               dataTableOutput('tab_luna')
-                             ),
-                             tabPanel(
-                               title = "Material (T)",
-                               width = 12,
-                               downloadButton("downloadExcel_material", "Descargar Excel"),
-                               dataTableOutput('tab_material')
-                             ),
-                             tabPanel(
-                               title = "Propiedad (T)",
-                               width = 12,
-                               downloadButton("downloadExcel_propiedad", "Descargar Excel"),
-                               dataTableOutput('tab_propiedad')
+                               downloadButton("downloadExcel_familia_grupo", "Descargar Excel"),
+                               dataTableOutput('tab_familia_grupo')
                              )
                            )),
-                    column(4, 
+                    column(6, 
                            tabBox(
-                             title = "Orden",
-                             selected = "Laboratorio (G)",
+                             title = "Sub Area",
+                             selected = "Grafico",
                              status = "primary",
                              solidHeader = FALSE,
                              maximizable = TRUE,
                              width = 12,
                              type = "tabs",
                              tabPanel(
-                               title = "Laboratorio (G)",
+                               title = "Grafico",
                                width = 12,
-                               plotOutput("plot_laboratorio", height = "600px")
+                               plotOutput("plot_subfamilia_grupo", height = "600px")
                              ),
                              tabPanel(
-                               title = "Montura (G)",
+                               title = "Tabla",
                                width = 12,
-                               plotOutput("plot_montura", height = "600px")
-                             ),
-                             tabPanel(
-                               title = "Color (G)",
-                               width = 12,
-                               plotOutput("plot_color", height = "600px")
-                             ),
-                             tabPanel(
-                               title = "Laboratorio (T)",
-                               width = 12,
-                               downloadButton("downloadExcel_laboratorio", "Descargar Excel"),
-                               dataTableOutput('tab_laboratorio')
-                             ),
-                             tabPanel(
-                               title = "Montura (T)",
-                               width = 12,
-                               downloadButton("downloadExcel_montura", "Descargar Excel"),
-                               dataTableOutput('tab_montura')
-                             ),
-                             tabPanel(
-                               title = "Color (T)",
-                               width = 12,
-                               downloadButton("downloadExcel_color", "Descargar Excel"),
-                               dataTableOutput('tab_color')
+                               downloadButton("downloadExcel_subfamilia_grupo", "Descargar Excel"),
+                               dataTableOutput('tab_subfamilia_grupo')
                              )
                            )),
                     column(4, 
