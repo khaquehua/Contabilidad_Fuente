@@ -622,6 +622,58 @@ server <- function(input, output, session) {
     return(filtered)
   })
   
+  filtered_data_PRODUCTO <- reactive({
+    
+    # Filtrar las fechas
+    selected_date_grupo <- input$selectDate_Grupo2
+    #selected_date_cotizacion <- input$selectDate_Cotizacion
+    #selected_date_orden <- input$selectDate_Orden
+    #selected_date_caja <- input$selectDate_Caja
+    # Filtrar familia y subfamilia
+    selected_familia <- input$selectFamilia2
+    selected_subfamilia <- input$selectSubfamilia2
+    selected_producto <- input$selectProducto
+    
+    filtered <- data$CAJA
+    
+    # Verificar si al menos un filtro está activado
+    any_filter_selected <- any(c(
+      length(selected_familia) > 1,
+      length(selected_subfamilia) > 1,
+      length(selected_producto) > 1,
+      !is.null(selected_date_grupo)#,
+      #!is.null(selected_date_cotizacion),
+      #!is.null(selected_date_orden),
+      #!is.null(selected_date_caja)
+    ))
+    
+    if (any_filter_selected) {
+      # Aplicar los filtros solo si al menos uno está seleccionado
+      filtered <- data$CAJA
+      
+      if (!"Todos" %in% selected_familia) {
+        filtered <- filtered[filtered$FAMILIA %in% selected_familia, ]
+      }
+      
+      if (!"Todos" %in% selected_subfamilia) {
+        filtered <- filtered[filtered$SUBFAMILIA %in% selected_subfamilia, ]
+      }
+      
+      if (!"Todos" %in% selected_producto) {
+        filtered <- filtered[filtered$descripcion %in% selected_producto, ]
+      }
+      
+      if (!is.null(selected_date_grupo)) {
+        filtered <- filtered[filtered$fecha >= selected_date_grupo[1] & filtered$fecha <= selected_date_grupo[2], ]
+      }
+      
+    } else {
+      filtered <- data$CAJA
+    }
+    
+    return(filtered)
+  })
+  
   #observeEvent(input$updateButtonOPT, {
   #  showModal(modalDialog(
   #    title = "Actualizando datos Optica",
@@ -840,7 +892,7 @@ server <- function(input, output, session) {
                   tags$img(icon("calendar", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
                   " Fecha"
                 ),
-                dateRangeInput("selectDate_Grupo", label = NULL, start = min(data$CAJA$fecha, na.rm = TRUE), 
+                dateRangeInput("selectDate_Grupo2", label = NULL, start = min(data$CAJA$fecha, na.rm = TRUE), 
                                end = max(data$CAJA$fecha, na.rm = TRUE))
               )),
               column(4, tags$div(
@@ -859,12 +911,22 @@ server <- function(input, output, session) {
                 ),
                 selectInput("selectSubfamilia", label = NULL, choices = c("Todos", names(table(data$CAJA$SUBFAMILIA))), selected = "Todos", multiple = TRUE)
               ))
+            ),
+            fluidRow(
+              column(12, tags$div(
+                class = "input-group",
+                tags$span(
+                  tags$img(icon("hand-holding-hand", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
+                  " Producto"
+                ),
+                selectInput("selectProducto", label = NULL, choices = c("Todos", names(table(data$CAJA$descripcion))), selected = "Todos", multiple = TRUE)
+              ))
             )
           ),
           fluidRow(
             column(4,
                    div(
-                     actionButton("updateButtonCAJA", "Actualizar datos", class = "btn btn-primary")#,
+                     actionButton("updateButtonCAJA2", "Actualizar datos", class = "btn btn-primary")#,
                      #id = "updateButton-container"
                    )
             )
@@ -879,13 +941,13 @@ server <- function(input, output, session) {
                 title = "General",
                 icon = icon("industry"),
                 fluidRow(
-                  column(12, uiOutput("dynamicTitleFechaCaja"))
+                  column(12, uiOutput("dynamicTitleFechaCaja2"))
                 ),
                 fluidRow(
                   
-                  column(4, infoBoxOutput("Boletas_emitidas_grupo", width = 12)),
-                  column(4, infoBoxOutput("Cantidades_producto_grupo", width = 12)),
-                  column(4, infoBoxOutput("Recaudacion_grupo", width = 12))
+                  column(4, infoBoxOutput("Boletas_emitidas_grupo2", width = 12)),
+                  column(4, infoBoxOutput("Cantidades_producto_grupo2", width = 12)),
+                  column(4, infoBoxOutput("Recaudacion_grupo2", width = 12))
                   ),
                   fluidRow(
                     column(12, 
@@ -900,13 +962,13 @@ server <- function(input, output, session) {
                              tabPanel(
                                title = "Costos (G)",
                                width = 12,
-                               plotOutput("plotts_costos_grupo", height = "600px")
+                               plotOutput("plotts_costos_producto", height = "600px")
                              ),
                              tabPanel(
                                title = "Tabla resumen",
                                width = 12,
-                               downloadButton("downloadExceltabla_ts_costos_grupo", "Descargar Excel"),
-                               dataTableOutput('tabla_ts_costos_grupo')
+                               downloadButton("downloadExceltabla_ts_costos_producto", "Descargar Excel"),
+                               dataTableOutput('tabla_ts_costos_producto')
                              )
                            ))
                   ),
@@ -914,27 +976,6 @@ server <- function(input, output, session) {
                 ),
                 div(
                   fluidRow(
-                    column(6, 
-                           tabBox(
-                             title = "Área",
-                             selected = "Grafico",
-                             status = "primary",
-                             solidHeader = FALSE,
-                             maximizable = TRUE,
-                             width = 12,
-                             type = "tabs",
-                             tabPanel(
-                               title = "Grafico",
-                               width = 12,
-                               plotOutput("plot_familia_grupo", height = "600px")
-                             ),
-                             tabPanel(
-                               title = "Tabla",
-                               width = 12,
-                               downloadButton("downloadExcel_familia_grupo", "Descargar Excel"),
-                               dataTableOutput('tab_familia_grupo')
-                             )
-                           )),
                     column(6, 
                            tabBox(
                              title = "Sub Area",
@@ -947,13 +988,34 @@ server <- function(input, output, session) {
                              tabPanel(
                                title = "Grafico",
                                width = 12,
-                               plotOutput("plot_subfamilia_grupo", height = "600px")
+                               plotOutput("plot_subfamilia_producto", height = "600px")
                              ),
                              tabPanel(
                                title = "Tabla",
                                width = 12,
                                downloadButton("downloadExcel_subfamilia_grupo", "Descargar Excel"),
                                dataTableOutput('tab_subfamilia_grupo')
+                             )
+                           )),
+                    column(6, 
+                           tabBox(
+                             title = "Tipo",
+                             selected = "Grafico",
+                             status = "primary",
+                             solidHeader = FALSE,
+                             maximizable = TRUE,
+                             width = 12,
+                             type = "tabs",
+                             tabPanel(
+                               title = "Grafico",
+                               width = 12,
+                               plotOutput("plot_tipo_producto", height = "600px")
+                             ),
+                             tabPanel(
+                               title = "Tabla",
+                               width = 12,
+                               downloadButton("downloadExcel_tipo_producto", "Descargar Excel"),
+                               dataTableOutput('tab_tipo_producto')
                              )
                            ))
                   ),
