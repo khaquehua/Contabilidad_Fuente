@@ -101,7 +101,7 @@ update_caja_fuente <- function() {
                                                  ifelse(caja$SUBFAMILIA %in% c("PROC.","PROC.E","PROCEDIMIENTO"),"PROCEDIMIENTOS ESPECIALES",
                                                         ifelse(caja$SUBFAMILIA == "ALQUI/","ALQUILER EQUIPOS",caja$SUBFAMILIA))))))
   
-  
+  caja$SUBFAMILIA <- ifelse(is.na(caja$SUBFAMILIA), caja$FAMILIA, caja$SUBFAMILIA)
   return(caja)
 }
 
@@ -1306,92 +1306,18 @@ server <- function(input, output, session) {
     )
   })
   
-  output$downloadExceltabla_recetas <- downloadHandler(
-    
-    filename = function() {
-      paste("Recetas_por_mes", Sys.Date(), ".xlsx", sep = "_")
-    },
-    
-    content = function(file) {
-      filtered <- filtered_data_OPT()
-      
-      recetas <- filtered %>% distinct(nro_receta, .keep_all = TRUE)
-      recetas <- recetas %>% group_by(Mes = format(reg_receta, "%Y-%m")) %>% summarise(Recetas = n())
-      
-      recetas_cot <- filtered %>% distinct(nro_receta, .keep_all = TRUE)
-      # Filtrar solo a los que tienen recetas
-      recetas_cot <- recetas_cot %>% filter(Tiene_cotizacion == "Si")
-      recetas_cot <- recetas_cot %>% distinct(nro_cotizacion, .keep_all = TRUE)
-      recetas_cot_mes <- recetas_cot %>% group_by(Mes = format(reg_receta, "%Y-%m")) %>% summarise(Cotizaciones = n())
-      
-      # Filtrar solo a los que tienen ordenes
-      recetas_cot_ordenes <- filtered %>% filter(estatus == "ENVIADO A TALLER")
-      recetas_cot_ordenes <- filtered %>% distinct(nro_orden, .keep_all = TRUE)
-      recetas_cot_ordenes_mes <- recetas_cot_ordenes %>% group_by(Mes = format(reg_receta, "%Y-%m")) %>% summarise(Ordenes = n())
-      
-      # Filtrar solo a los que tienen pagos
-      recetas_pagos <- filtered %>% filter(estatus == "ENVIADO A TALLER")
-      recetas_pagos <- recetas_pagos %>%
-        arrange(nro_orden, desc(Tiene_pago == "Si")) %>%
-        distinct(nro_orden, .keep_all = TRUE)
-      recetas_pagos <- recetas_pagos %>% group_by(Mes = format(reg_receta, "%Y-%m")) %>% summarise(Pagos = n())
-      
-      unir <- merge(x = recetas, y = recetas_cot_mes, by = "Mes", all.x = TRUE)
-      unir <- merge(x = unir, y = recetas_cot_ordenes_mes, by = "Mes", all.x = TRUE)
-      unir <- merge(x = unir, y = recetas_pagos, by = "Mes", all.x = TRUE)
-      
-      write.xlsx(unir, file, sheetName = "Recetas_seguimiento_por_mes", row.names = FALSE)
-    }
-  )
-  
-  output$tabla_recetas <- renderDataTable({
-    
-    filtered <- filtered_data_OPT()
-    
-    recetas <- filtered %>% distinct(nro_receta, .keep_all = TRUE)
-    recetas <- recetas %>% group_by(Mes = format(reg_receta, "%Y-%m")) %>% summarise(Recetas = n())
-    
-    recetas_cot <- filtered %>% distinct(nro_receta, .keep_all = TRUE)
-    # Filtrar solo a los que tienen recetas
-    recetas_cot <- recetas_cot %>% filter(Tiene_cotizacion == "Si")
-    recetas_cot <- recetas_cot %>% distinct(nro_cotizacion, .keep_all = TRUE)
-    recetas_cot_mes <- recetas_cot %>% group_by(Mes = format(reg_receta, "%Y-%m")) %>% summarise(Cotizaciones = n())
-    
-    # Filtrar solo a los que tienen ordenes
-    recetas_cot_ordenes <- filtered %>% filter(estatus == "ENVIADO A TALLER")
-    recetas_cot_ordenes <- filtered %>% distinct(nro_orden, .keep_all = TRUE)
-    recetas_cot_ordenes_mes <- recetas_cot_ordenes %>% group_by(Mes = format(reg_receta, "%Y-%m")) %>% summarise(Ordenes = n())
-    
-    # Filtrar solo a los que tienen pagos
-    recetas_pagos <- filtered %>% filter(estatus == "ENVIADO A TALLER")
-    recetas_pagos <- recetas_pagos %>%
-      arrange(nro_orden, desc(Tiene_pago == "Si")) %>%
-      distinct(nro_orden, .keep_all = TRUE)
-    recetas_pagos <- recetas_pagos %>% group_by(Mes = format(reg_receta, "%Y-%m")) %>% summarise(Pagos = n())
-    
-    unir <- merge(x = recetas, y = recetas_cot_mes, by = "Mes", all.x = TRUE)
-    unir <- merge(x = unir, y = recetas_cot_ordenes_mes, by = "Mes", all.x = TRUE)
-    unir <- merge(x = unir, y = recetas_pagos, by = "Mes", all.x = TRUE)
-    
-    df <- unir
-    
-    datatable(
-      df
-    )
-  })
-  
-  
   #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-  #:::::::::::::::::     REALIZAR GRAFICOS OPTOMETRAS    :::::::::::::::::::::::
+  #::::::::::::::::::       REALIZAR GRAFICOS GRUPOS       :::::::::::::::::::::
   #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   #::::::::::::::::::              GRAFICOS                :::::::::::::::::::::
   #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   
-  output$plotoptometra <- renderPlot({
+  output$plot_familia_grupo <- renderPlot({
     
-    filtered <- filtered_data_OPT()
-    recetas <- filtered %>% distinct(nro_receta, .keep_all = TRUE)
+    filtered <- filtered_data_GRUPO()
+    areas <- filtered %>% group_by(FAMILIA) %>% 
+      summarise(Monto = sum(cantidad_pu)) %>% arrange(desc(Monto))
     
     # Detectar si está en modo oscuro o claro con input$dark_mode
     is_dark_mode <- input$dark_mode  # TRUE si está activado, FALSE si no
@@ -1400,7 +1326,7 @@ server <- function(input, output, session) {
     text_color <- ifelse(is_dark_mode, "white", "black")
     line_color <- ifelse(is_dark_mode, "#17e0ff", "#38a0b0")
     
-    if (nrow(recetas) == 0) {
+    if (nrow(areas) == 0) {
       return(ggplot() +
                geom_text(aes(x = 1, y = 1, label = "No hay datos disponibles\npara los filtros seleccionados"), 
                          size = 6, fontface = "bold", color = line_color) +
@@ -1410,14 +1336,10 @@ server <- function(input, output, session) {
                ))
     }
     
-    optometras <- recetas %>%
-      group_by(optometra) %>%
-      summarise(Cantidad = n()) %>% mutate(Porcentaje = prop.table(Cantidad)*100)
-    
-    max_cantidad <- max(optometras$Porcentaje, na.rm = TRUE)
+    max_cantidad <- max(areas$Monto, na.rm = TRUE)
     max_redondeado <- ceiling(max_cantidad / 10) * 10  
     
-    ggplot(data = optometras, aes(x = reorder(optometra, Porcentaje), y = Porcentaje)) + 
+    ggplot(data = areas, aes(x = reorder(FAMILIA, Monto), y = Monto)) + 
       geom_bar(stat = "identity", fill = line_color) + 
       coord_flip() + 
       theme_minimal_hgrid() +
@@ -1430,11 +1352,11 @@ server <- function(input, output, session) {
         axis.text.x = element_text(size = 10, angle = 60, vjust = 0.5, face = "bold", color = text_color), #text_color
         axis.text.y = element_text(face = "bold", size = 10, color = text_color), #text_color
       ) + 
-      labs(y = "Porcentaje (%)", title = "Optometras") + 
-      geom_label(aes(label = paste0(Cantidad," (",round(Porcentaje, 2), "%)")), 
+      labs(y = "Montos (S/.)", title = "Areas") + 
+      geom_label(aes(label = scales::dollar(Monto, prefix = "S/. ")), 
                  colour = text_color, fill = bg_color,  # Usar la columna calculada
                  fontface = "bold.italic", hjust = 0.2, size = 4) +
-      scale_y_continuous(labels = etiquetas2, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 10))
+      scale_y_continuous(labels = etiquetas, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 50000))
     
   })
   
@@ -1442,63 +1364,43 @@ server <- function(input, output, session) {
   #::::::::::::::::::                TABLAS                :::::::::::::::::::::
   #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   
-  output$downloadExcel_optometra <- downloadHandler(
+  output$downloadExcel_familia_grupo <- downloadHandler(
     filename = function() {
-      paste("Optometras_recetas", Sys.Date(), ".xlsx", sep = "_")
+      paste("Areas_montos", Sys.Date(), ".xlsx", sep = "_")
     },
     content = function(file) {
       
-      filtered <- filtered_data_OPT()
-      recetas <- filtered %>% distinct(nro_receta, .keep_all = TRUE)
-      optometras <- recetas %>%
-        group_by(optometra) %>%
-        summarise(Cantidad = n()) %>% mutate(Porcentaje = prop.table(Cantidad)*100) %>%
-        arrange(desc(Cantidad)) 
+      filtered <- filtered_data_GRUPO()
       
-      write.xlsx(optometras, file, sheetName = "Optometras_recetas", row.names = FALSE)
+      boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+      areas <- filtered %>% group_by(FAMILIA) %>% summarise(Monto = sum(cantidad_pu))
+      
+      boletas_areas <- boletas %>% group_by(FAMILIA) %>% summarise(Boletas = n())
+      
+      unir <- merge(x = areas, y = boletas_areas, by = "FAMILIA", all.x = TRUE)
+      unir <- unir %>% arrange(desc(Monto))
+      
+      write.xlsx(unir, file, sheetName = "Areas_montos", row.names = FALSE)
     }
   )
   
-  output$tab_optometra <- renderDataTable({
+  output$tab_familia_grupo <- renderDataTable({
     
-    filtered <- filtered_data_OPT()
+    filtered <- filtered_data_GRUPO()
     
-    recetas <- filtered %>% distinct(nro_receta, .keep_all = TRUE)
-    optometras <- recetas %>%
-      group_by(optometra) %>%
-      summarise(Cantidad = n()) %>% mutate(Porcentaje = prop.table(Cantidad)*100) %>%
-      arrange(desc(Cantidad)) 
+    boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+    areas <- filtered %>% group_by(FAMILIA) %>% summarise(Monto = sum(cantidad_pu))
     
-    optometras$Porcentaje <- round(optometras$Porcentaje,2)
+    boletas_areas <- boletas %>% group_by(FAMILIA) %>% summarise(Boletas = n())
     
-    df <- optometras
+    unir <- merge(x = areas, y = boletas_areas, by = "FAMILIA", all.x = TRUE)
+    unir <- unir %>% arrange(desc(Monto))
+    unir$Monto <- scales::dollar(unir$Monto, prefix = "S/. ")
+    
+    df <- unir
     
     datatable(
-      df,
-      escape = FALSE,
-      options = list(
-        columnDefs = list(
-          list(
-            targets = 1, # Índice de la columna nombre
-            render = JS(
-              "function(data, type, row) {",
-              "  var imgSrc = '';",
-              "  if (data == 'Dr Deza') { imgSrc = 'http://190.117.45.164:29000/oftalmologia/img/caras/drdeza.jpg'; }",
-              "  else if (data == 'Dra Guerrero') { imgSrc = 'http://190.117.45.164:29000/oftalmologia/img/caras/draguerrero.jpg'; }",
-              "  else if (data == 'Dr Magno') { imgSrc = 'http://190.117.45.164:29000/oftalmologia/inlaser/img/Dr%20Magno.jpg'; }",
-              "  else if (data == 'Dra Obispo') { imgSrc = 'http://190.117.45.164:29000/oftalmologia/inlaser/img/Dra%20Obispo.jpg'; }",
-              "  else if (data == 'Dr Joel Benjamin Apaza Suclli') { imgSrc = 'http://190.117.45.164:29000/oftalmologia/img/caras/drjoel.jpg'; }",
-              "  else if (data == 'Dr Samaniego') { imgSrc = 'http://190.117.45.164:29000/oftalmologia/inlaser/img/Dr%20Samaniego.jpg'; }",
-              "  else if (data == 'SIN OPTOMETRA') { imgSrc = 'https://clinicalafuente.com/favicon.png'; }",
-              "  else if (data == 'Dr Indira Sutta') { imgSrc = 'http://190.117.45.164:29000/oftalmologia/img/caras/drasutta.jpg'; }",
-              "  else { imgSrc = 'https://clinicalafuente.com/favicon.png'; }",
-              "  return '<img src=\"' + imgSrc + '\" style=\"width: 40px; height: 40px; border-radius: 50%;\"> ' + data;",
-              "}"
-            )
-          )
-        )
-      ),
-      callback = JS("table.column(0).nodes().to$().css('vertical-align', 'middle');")
+      df
     )
   })
   
@@ -1510,18 +1412,11 @@ server <- function(input, output, session) {
   #::::::::::::::::::              GRAFICOS                :::::::::::::::::::::
   #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   
-  output$plot_luna <- renderPlot({
+  output$plot_subfamilia_grupo <- renderPlot({
     
-    filtered <- filtered_data_OPT2()
+    filtered <- filtered_data_GRUPO()
     
-    cotizacion <- filtered %>%
-      arrange(nro_cotizacion, desc(estatus == "ENVIADO A TALLER")) %>%
-      distinct(nro_cotizacion, .keep_all = TRUE)
-    
-    luna <- cotizacion %>% filter(tipluna != "No Registro") %>%
-      group_by(tipluna) %>% summarise(Cantidad = n()) %>% 
-      mutate(Porcentaje = prop.table(Cantidad)*100)
-    
+    subarea <- filtered %>% group_by(SUBFAMILIA) %>% summarise(Monto = sum(cantidad_pu))
     
     # Detectar si está en modo oscuro o claro con input$dark_mode
     is_dark_mode <- input$dark_mode  # TRUE si está activado, FALSE si no
@@ -1530,7 +1425,7 @@ server <- function(input, output, session) {
     text_color <- ifelse(is_dark_mode, "white", "black")
     line_color <- ifelse(is_dark_mode, "#17e0ff", "#38a0b0")
     
-    if (nrow(luna) == 0) {
+    if (nrow(subarea) == 0) {
       return(ggplot() +
                geom_text(aes(x = 1, y = 1, label = "No hay datos disponibles\npara los filtros seleccionados"), 
                          size = 6, fontface = "bold", color = line_color) +
@@ -1540,10 +1435,10 @@ server <- function(input, output, session) {
                ))
     }
     
-    max_cantidad <- max(luna$Porcentaje, na.rm = TRUE)
+    max_cantidad <- max(subarea$Monto, na.rm = TRUE)
     max_redondeado <- ceiling(max_cantidad / 10) * 10  
     
-    ggplot(data = luna, aes(x = reorder(tipluna, Porcentaje), y = Porcentaje)) + 
+    ggplot(data = subarea, aes(x = reorder(SUBFAMILIA, Monto), y = Monto)) + 
       geom_bar(stat = "identity", fill = line_color) + 
       coord_flip() + 
       theme_minimal_hgrid() +
@@ -1556,11 +1451,11 @@ server <- function(input, output, session) {
         axis.text.x = element_text(size = 10, angle = 60, vjust = 0.5, face = "bold", color = text_color), #text_color
         axis.text.y = element_text(face = "bold", size = 10, color = text_color), #text_color
       ) + 
-      labs(y = "Porcentaje (%)", title = "Tipo Luna") + 
+      labs(y = "Monto (S/)", title = "Sub Área") + 
       geom_label(aes(label = paste0(Cantidad," (",round(Porcentaje, 2), "%)")), 
                  colour = text_color, fill = bg_color,  # Usar la columna calculada
                  fontface = "bold.italic", hjust = 0.2, size = 4) +
-      scale_y_continuous(labels = etiquetas2, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 10))
+      scale_y_continuous(labels = etiquetas, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 50000))
     
   })
   
@@ -1568,43 +1463,41 @@ server <- function(input, output, session) {
   #::::::::::::::::::                TABLAS                :::::::::::::::::::::
   #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   
-  output$downloadExcel_luna <- downloadHandler(
+  output$downloadExcel_subfamilia_grupo <- downloadHandler(
     filename = function() {
-      paste("Luna_cotizacion", Sys.Date(), ".xlsx", sep = "_")
+      paste("Subarea_monto", Sys.Date(), ".xlsx", sep = "_")
     },
     content = function(file) {
       
-      filtered <- filtered_data_OPT2()
+      filtered <- filtered_data_GRUPO()
       
-      cotizacion <- filtered %>%
-        arrange(nro_cotizacion, desc(estatus == "ENVIADO A TALLER")) %>%
-        distinct(nro_cotizacion, .keep_all = TRUE)
+      boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+      subarea <- filtered %>% group_by(SUBFAMILIA) %>%
+        summarise(Monto = sum(cantidad_pu))
+      boletas_subarea <- boletas %>% group_by(SUBFAMILIA) %>%
+        summarise(Boletas = n()) 
       
-      luna <- cotizacion %>% filter(tipluna != "No Registro") %>%
-        group_by(tipluna) %>% summarise(Cantidad = n()) %>% 
-        mutate(Porcentaje = prop.table(Cantidad)*100) %>%
-        arrange(desc(Porcentaje))
+      unir <- merge(x = subarea, y = boletas_subarea, by = "SUBFAMILIA", all.x = TRUE)
+      unir <- unir %>% arrange(desc(Monto))
       
-      write.xlsx(luna, file, sheetName = "Luna_cotizacion", row.names = FALSE)
+      write.xlsx(unir, file, sheetName = "Subarea_monto", row.names = FALSE)
     }
   )
   
-  output$tab_luna <- renderDataTable({
+  output$tab_subfamilia_grupo <- renderDataTable({
     
-    filtered <- filtered_data_OPT2()
+    filtered <- filtered_data_GRUPO()
     
-    cotizacion <- filtered %>%
-      arrange(nro_cotizacion, desc(estatus == "ENVIADO A TALLER")) %>%
-      distinct(nro_cotizacion, .keep_all = TRUE)
+    boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+    subarea <- filtered %>% group_by(SUBFAMILIA) %>%
+      summarise(Monto = sum(cantidad_pu))
+    boletas_subarea <- boletas %>% group_by(SUBFAMILIA) %>%
+      summarise(Boletas = n()) 
     
-    luna <- cotizacion %>% filter(tipluna != "No Registro") %>%
-      group_by(tipluna) %>% summarise(Cantidad = n()) %>% 
-      mutate(Porcentaje = prop.table(Cantidad)*100) %>%
-      arrange(desc(Porcentaje))
+    unir <- merge(x = subarea, y = boletas_subarea, by = "SUBFAMILIA", all.x = TRUE)
+    unir <- unir %>% arrange(desc(Monto))
     
-    luna$Porcentaje <- round(luna$Porcentaje, 2)
-    
-    df <- luna
+    df <- unir
     
     datatable(
       df
