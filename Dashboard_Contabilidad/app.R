@@ -1452,7 +1452,7 @@ server <- function(input, output, session) {
         axis.text.y = element_text(face = "bold", size = 10, color = text_color), #text_color
       ) + 
       labs(y = "Monto (S/)", title = "Sub Área") + 
-      geom_label(aes(label = paste0(Cantidad," (",round(Porcentaje, 2), "%)")), 
+      geom_label(aes(label = scales::dollar(Monto, prefix = "S/. ")), 
                  colour = text_color, fill = bg_color,  # Usar la columna calculada
                  fontface = "bold.italic", hjust = 0.2, size = 4) +
       scale_y_continuous(labels = etiquetas, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 50000))
