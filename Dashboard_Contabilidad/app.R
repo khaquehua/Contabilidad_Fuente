@@ -1294,7 +1294,7 @@ server <- function(input, output, session) {
     filtered <- filtered_data_GRUPO()
     
     boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
-    costos <- filtered %>% group_by(Mes = format(fecha, "%Y-%m")) %>% summarise(Recaudacion = sum(cantidad_pu))
+    costos <- filtered %>% group_by(Mes = format(fecha, "%Y-%m")) %>% summarise(Recaudacion = scales::dollar(sum(cantidad_pu), prefix = "S/. "))
     boletas_mes <- boletas %>% group_by(Mes = format(fecha, "%Y-%m")) %>% summarise(Boletas = n())
     
     unir <- merge(x = costos, y = boletas_mes, by = "Mes", all.x = TRUE)
