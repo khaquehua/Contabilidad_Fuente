@@ -1496,6 +1496,7 @@ server <- function(input, output, session) {
     
     unir <- merge(x = subarea, y = boletas_subarea, by = "SUBFAMILIA", all.x = TRUE)
     unir <- unir %>% arrange(desc(Monto))
+    unir$Monto <- scales::dollar(unir$Monto, prefix = "S/. ")
     
     df <- unir
     
