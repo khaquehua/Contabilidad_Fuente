@@ -887,7 +887,24 @@ server <- function(input, output, session) {
                            ))
                   ),
                   style = "margin-top: 20px;"
+                ),
+              tabPanel(
+                title = "Lista productos",
+                icon = icon("industry"),
+                fluidRow(
+                  column(12, 
+                         box(
+                           title = "Lista productos",
+                           status = "primary",
+                           solidHeader = TRUE,
+                           maximizable = TRUE,
+                           width = 12,
+                           downloadButton("downloadExcel_Productos", "Descargar Excel"),
+                           DT::dataTableOutput('tabla_productos')
+                         )
+                  )
                 )
+              )
               )
             ),
           style = "margin-top: 20px;"
@@ -956,85 +973,106 @@ server <- function(input, output, session) {
                 fluidRow(
                   column(12, uiOutput("dynamicTitleFechaCaja2"))
                 ),
-                fluidRow(
-                  
-                  column(4, infoBoxOutput("Boletas_emitidas_grupo2", width = 12)),
-                  column(4, infoBoxOutput("Cantidades_producto_grupo2", width = 12)),
-                  column(4, infoBoxOutput("Recaudacion_grupo2", width = 12))
-                  ),
-                  fluidRow(
-                    column(12, 
-                           tabBox(
-                             title = "Evolución costos",
-                             selected = "Costos (G)",
-                             status = "primary",
-                             solidHeader = FALSE,
-                             maximizable = TRUE,
-                             width = 12,
-                             type = "tabs",
-                             tabPanel(
-                               title = "Costos (G)",
-                               width = 12,
-                               plotOutput("plotts_costos_producto", height = "600px")
-                             ),
-                             tabPanel(
-                               title = "Tabla resumen",
-                               width = 12,
-                               downloadButton("downloadExceltabla_ts_costos_producto", "Descargar Excel"),
-                               dataTableOutput('tabla_ts_costos_producto')
-                             )
-                           ))
-                  ),
-                  style = "margin-top: 20px;"
-                ),
                 div(
                   fluidRow(
-                    column(6, 
-                           tabBox(
-                             title = "Sub Area",
-                             selected = "Grafico",
-                             status = "primary",
-                             solidHeader = FALSE,
-                             maximizable = TRUE,
-                             width = 12,
-                             type = "tabs",
-                             tabPanel(
-                               title = "Grafico",
-                               width = 12,
-                               plotOutput("plot_subfamilia_producto", height = "600px")
-                             ),
-                             tabPanel(
-                               title = "Tabla",
-                               width = 12,
-                               downloadButton("downloadExcel_subfamilia_producto", "Descargar Excel"),
-                               dataTableOutput('tab_subfamilia_producto')
-                             )
-                           )),
-                    column(6, 
-                           tabBox(
-                             title = "Tipo",
-                             selected = "Grafico",
-                             status = "primary",
-                             solidHeader = FALSE,
-                             maximizable = TRUE,
-                             width = 12,
-                             type = "tabs",
-                             tabPanel(
-                               title = "Grafico",
-                               width = 12,
-                               plotOutput("plot_tipo_producto", height = "600px")
-                             ),
-                             tabPanel(
-                               title = "Tabla",
-                               width = 12,
-                               downloadButton("downloadExcel_tipo_producto", "Descargar Excel"),
-                               dataTableOutput('tab_tipo_producto')
-                             )
-                           ))
+                    
+                    column(4, infoBoxOutput("Boletas_emitidas_grupo2", width = 12)),
+                    column(4, infoBoxOutput("Cantidades_producto_grupo2", width = 12)),
+                    column(4, infoBoxOutput("Recaudacion_grupo2", width = 12))
                   ),
-                  style = "margin-top: 20px;"
+                  div(
+                    fluidRow(
+                      column(12, 
+                             tabBox(
+                               title = "Evolución costos",
+                               selected = "Costos (G)",
+                               status = "primary",
+                               solidHeader = FALSE,
+                               maximizable = TRUE,
+                               width = 12,
+                               type = "tabs",
+                               tabPanel(
+                                 title = "Costos (G)",
+                                 width = 12,
+                                 plotOutput("plotts_costos_producto", height = "600px")
+                               ),
+                               tabPanel(
+                                 title = "Tabla resumen",
+                                 width = 12,
+                                 downloadButton("downloadExceltabla_ts_costos_producto", "Descargar Excel"),
+                                 dataTableOutput('tabla_ts_costos_producto')
+                               )
+                             ))
+                    ),
+                    style = "margin-top: 20px;"
+                  ),
+                  div(
+                    fluidRow(
+                      column(6, 
+                             tabBox(
+                               title = "Sub Area",
+                               selected = "Grafico",
+                               status = "primary",
+                               solidHeader = FALSE,
+                               maximizable = TRUE,
+                               width = 12,
+                               type = "tabs",
+                               tabPanel(
+                                 title = "Grafico",
+                                 width = 12,
+                                 plotOutput("plot_subfamilia_producto", height = "600px")
+                               ),
+                               tabPanel(
+                                 title = "Tabla",
+                                 width = 12,
+                                 downloadButton("downloadExcel_subfamilia_producto", "Descargar Excel"),
+                                 dataTableOutput('tab_subfamilia_producto')
+                               )
+                             )),
+                      column(6, 
+                             tabBox(
+                               title = "Tipo",
+                               selected = "Grafico",
+                               status = "primary",
+                               solidHeader = FALSE,
+                               maximizable = TRUE,
+                               width = 12,
+                               type = "tabs",
+                               tabPanel(
+                                 title = "Grafico",
+                                 width = 12,
+                                 plotOutput("plot_tipo_producto", height = "600px")
+                               ),
+                               tabPanel(
+                                 title = "Tabla",
+                                 width = 12,
+                                 downloadButton("downloadExcel_tipo_producto", "Descargar Excel"),
+                                 dataTableOutput('tab_tipo_producto')
+                               )
+                             ))
+                    ),
+                    style = "margin-top: 20px;"
+                  )
+                )
+              ),
+              tabPanel(
+                title = "Lista productos",
+                icon = icon("industry"),
+                fluidRow(
+                  column(12, 
+                         box(
+                           title = "Lista productos",
+                           status = "primary",
+                           solidHeader = TRUE,
+                           maximizable = TRUE,
+                           width = 12,
+                           downloadButton("downloadExcel_Productos", "Descargar Excel"),
+                           DT::dataTableOutput('tabla_productos')
+                         )
+                  )
                 )
               )
+            )
             ),
             style = "margin-top: 20px;"
           ),
@@ -1816,7 +1854,7 @@ server <- function(input, output, session) {
       geom_label(aes(label = scales::dollar(Monto, prefix = "S/. ")), 
                  colour = text_color, fill = bg_color,  # Usar la columna calculada
                  fontface = "bold.italic", hjust = 0.2, size = 4) +
-      scale_y_continuous(labels = etiquetas, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 50000))
+      scale_y_continuous(labels = etiquetas, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 250000))
     
   })
   
@@ -1952,6 +1990,44 @@ server <- function(input, output, session) {
       df
     )
   })
+  
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  #::::::::::::::::::                TABLAS                :::::::::::::::::::::
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  
+  output$downloadExcel_Productos <- downloadHandler(
+    filename = function() {
+      paste("Productos", Sys.Date(), ".xlsx", sep = "_")
+    },
+    content = function(file) {
+      
+      filtered <- filtered_data_PRODUCTO()
+      
+      seleccionar <- filtered %>% select(producto, Boleta = ID, fecha, cantidad_prod, pu, cantidad_pu) %>%
+        arrange(desc(fecha))
+      
+      write.xlsx(seleccionar, file, sheetName = "Productos", row.names = FALSE)
+    }
+  )
+  
+  output$tabla_productos <- renderDataTable({
+    
+    filtered <- filtered_data_PRODUCTO()
+    
+    seleccionar <- filtered %>% select(producto, Boleta = ID, fecha, cantidad_prod, pu, cantidad_pu) %>%
+      arrange(desc(fecha))
+    
+    seleccionar$pu <- scales::dollar(seleccionar$pu, prefix = "S/. ")
+    seleccionar$cantidad_pu <- scales::dollar(seleccionar$cantidad_pu, prefix = "S/. ")
+    
+    df <- seleccionar
+    
+    datatable(
+      df
+    )
+  })
+  
+  
   
 }
 
