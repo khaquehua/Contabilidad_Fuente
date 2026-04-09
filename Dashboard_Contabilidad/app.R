@@ -1006,8 +1006,8 @@ server <- function(input, output, session) {
                              tabPanel(
                                title = "Tabla",
                                width = 12,
-                               downloadButton("downloadExcel_subfamilia_grupo", "Descargar Excel"),
-                               dataTableOutput('tab_subfamilia_grupo')
+                               downloadButton("downloadExcel_subfamilia_producto", "Descargar Excel"),
+                               dataTableOutput('tab_subfamilia_producto')
                              )
                            )),
                     column(6, 
@@ -1652,6 +1652,314 @@ server <- function(input, output, session) {
       icon = icon("fas fa-hand-holding-dollar"),
       color = "success",
       width = NULL
+    )
+  })
+  
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  #:::::::::::::::::::::::             GRAFICO              ::::::::::::::::::::
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  
+  output$plotts_costos_producto <- renderPlot({
+    
+    filtered <- filtered_data_PRODUCTO()
+    
+    is_dark_mode <- input$dark_mode
+    
+    bg_color <- ifelse(is_dark_mode, "#343a40", "white") 
+    text_color <- ifelse(is_dark_mode, "white", "black")
+    line_color <- ifelse(is_dark_mode, "#17e0ff", "#38a0b0")
+    
+    if (nrow(filtered) == 0) {
+      return(ggplot() +
+               geom_text(aes(x = 1, y = 1, label = "No hay datos disponibles\npara los filtros seleccionados"), 
+                         size = 6, fontface = "bold", color = line_color) +
+               theme_minimal_hgrid() +
+               theme(
+                 plot.background = element_rect(fill = bg_color)
+               ))
+    }
+    
+    recaudacion_por_mes <- filtered %>%
+      group_by(Mes = format(fecha, "%Y-%m")) %>%
+      summarise(Monto = sum(cantidad_pu))
+    
+    recaudacion_por_mes$Mes <- as.Date(paste0(recaudacion_por_mes$Mes, "-01"))
+    recaudacion_por_mes$Año <- format(recaudacion_por_mes$Mes, "%Y")
+    cambios_de_año <- which(diff(as.numeric(recaudacion_por_mes$Año)) != 0)
+    
+    max_cantidad <- max(recaudacion_por_mes$Monto, na.rm = TRUE)
+    max_redondeado <- ceiling(max_cantidad / 10) * 10  
+    
+    ggplot(recaudacion_por_mes, aes(x = Mes, y = Monto)) + 
+      geom_line(group = 1, color = line_color, linetype = "solid") + 
+      geom_point(size = 1, shape = 21, stroke = 2, fill = "#00bcf5", color = "#00bcf5") +
+      theme_minimal_hgrid() +
+      labs(x = "Fecha", y = "Cantidad", title = "Montos totales por mes") +
+      geom_vline(
+        xintercept = as.numeric(recaudacion_por_mes$Mes[cambios_de_año]),
+        color = "#00bcf5",  
+        linetype = "dashed",  
+        size = 1  
+      ) +
+      theme(
+        plot.background = element_rect(fill = bg_color),  
+        legend.position = "none",
+        plot.title = element_text(hjust = 0.5, size = 25, face = "bold", color = "#0aa1c6"),
+        axis.title.y = element_text(face = "bold", size = 15, color = text_color),
+        axis.title.x = element_text(face = "bold", size = 15, color = text_color),
+        axis.text.x = element_text(size = 12, angle = 90, vjust = 0.5, face = "bold", color = text_color),
+        axis.text.y = element_text(face = "bold", size = 10, color = text_color)
+      ) +
+      geom_label(
+        data = recaudacion_por_mes,
+        aes(label = scales::dollar(Monto, prefix = "S/. ")),
+        size = 4,
+        label.padding = unit(0.5, "lines"),
+        label.r = unit(0.15, "lines"),
+        fontface = "bold",
+        color = text_color,
+        fill = bg_color
+      ) +
+      scale_x_date(
+        date_labels = "%Y-%m",
+        date_breaks = "1 month"
+      ) +
+      scale_y_continuous(
+        breaks = seq(0, max_redondeado, by = 100000),
+        labels = seq(0, max_redondeado, by = 100000)
+      )
+  })
+  
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  #::::::::::::::::::               TABLAS                 :::::::::::::::::::::
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  
+  output$downloadExceltabla_ts_costos_producto <- downloadHandler(
+    filename = function() {
+      paste("Costos_por_mes", Sys.Date(), ".xlsx", sep = "_")
+    },
+    content = function(file) {
+      
+      filtered <- filtered_data_PRODUCTO()
+      
+      boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+      costos <- filtered %>% group_by(Mes = format(fecha, "%Y-%m")) %>% summarise(Recaudacion = sum(cantidad_pu))
+      boletas_mes <- boletas %>% group_by(Mes = format(fecha, "%Y-%m")) %>% summarise(Boletas = n())
+      
+      unir <- merge(x = costos, y = boletas_mes, by = "Mes", all.x = TRUE)
+      
+      write.xlsx(unir, file, sheetName = "Costos_por_mes", row.names = FALSE)
+    }
+  )
+  
+  output$tabla_ts_costos_producto <- renderDataTable({
+    
+    filtered <- filtered_data_PRODUCTO()
+    
+    boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+    costos <- filtered %>% group_by(Mes = format(fecha, "%Y-%m")) %>% summarise(Recaudacion = scales::dollar(sum(cantidad_pu), prefix = "S/. "))
+    boletas_mes <- boletas %>% group_by(Mes = format(fecha, "%Y-%m")) %>% summarise(Boletas = n())
+    
+    unir <- merge(x = costos, y = boletas_mes, by = "Mes", all.x = TRUE)
+    
+    df <- unir
+    
+    datatable(
+      df
+    )
+  })
+  
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  #::::::::::::::::::              GRAFICOS                :::::::::::::::::::::
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  
+  output$plot_subfamilia_producto <- renderPlot({
+    
+    filtered <- filtered_data_PRODUCTO()
+    
+    subarea <- filtered %>% group_by(SUBFAMILIA) %>% summarise(Monto = sum(cantidad_pu))
+    
+    # Detectar si está en modo oscuro o claro con input$dark_mode
+    is_dark_mode <- input$dark_mode  # TRUE si está activado, FALSE si no
+    
+    bg_color <- ifelse(is_dark_mode, "#343a40", "white") 
+    text_color <- ifelse(is_dark_mode, "white", "black")
+    line_color <- ifelse(is_dark_mode, "#17e0ff", "#38a0b0")
+    
+    if (nrow(subarea) == 0) {
+      return(ggplot() +
+               geom_text(aes(x = 1, y = 1, label = "No hay datos disponibles\npara los filtros seleccionados"), 
+                         size = 6, fontface = "bold", color = line_color) +
+               theme_minimal_hgrid() +
+               theme(
+                 plot.background = element_rect(fill = bg_color)
+               ))
+    }
+    
+    max_cantidad <- max(subarea$Monto, na.rm = TRUE)
+    max_redondeado <- ceiling(max_cantidad / 10) * 10  
+    
+    ggplot(data = subarea, aes(x = reorder(SUBFAMILIA, Monto), y = Monto)) + 
+      geom_bar(stat = "identity", fill = line_color) + 
+      coord_flip() + 
+      theme_minimal_hgrid() +
+      theme(
+        plot.background = element_rect(fill = bg_color), #bg_colou
+        legend.position = "none",
+        plot.title = element_text(hjust = 0.5, size = 12, face = "bold", color = text_color),
+        axis.title.y = element_blank(), #text_color
+        axis.title.x = element_text(face = "bold", size = 10, color = text_color), #text_color
+        axis.text.x = element_text(size = 10, angle = 60, vjust = 0.5, face = "bold", color = text_color), #text_color
+        axis.text.y = element_text(face = "bold", size = 10, color = text_color), #text_color
+      ) + 
+      labs(y = "Monto (S/)", title = "Sub Área") + 
+      geom_label(aes(label = scales::dollar(Monto, prefix = "S/. ")), 
+                 colour = text_color, fill = bg_color,  # Usar la columna calculada
+                 fontface = "bold.italic", hjust = 0.2, size = 4) +
+      scale_y_continuous(labels = etiquetas, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 50000))
+    
+  })
+  
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  #::::::::::::::::::                TABLAS                :::::::::::::::::::::
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  
+  output$downloadExcel_subfamilia_producto <- downloadHandler(
+    filename = function() {
+      paste("Subarea_monto", Sys.Date(), ".xlsx", sep = "_")
+    },
+    content = function(file) {
+      
+      filtered <- filtered_data_PRODUCTO()
+      
+      boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+      subarea <- filtered %>% group_by(SUBFAMILIA) %>%
+        summarise(Monto = sum(cantidad_pu))
+      boletas_subarea <- boletas %>% group_by(SUBFAMILIA) %>%
+        summarise(Boletas = n()) 
+      
+      unir <- merge(x = subarea, y = boletas_subarea, by = "SUBFAMILIA", all.x = TRUE)
+      unir <- unir %>% arrange(desc(Monto))
+      
+      write.xlsx(unir, file, sheetName = "Subarea_monto", row.names = FALSE)
+    }
+  )
+  
+  output$tab_subfamilia_producto <- renderDataTable({
+    
+    filtered <- filtered_data_PRODUCTO()
+    
+    boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+    subarea <- filtered %>% group_by(SUBFAMILIA) %>%
+      summarise(Monto = sum(cantidad_pu))
+    boletas_subarea <- boletas %>% group_by(SUBFAMILIA) %>%
+      summarise(Boletas = n()) 
+    
+    unir <- merge(x = subarea, y = boletas_subarea, by = "SUBFAMILIA", all.x = TRUE)
+    unir <- unir %>% arrange(desc(Monto))
+    unir$Monto <- scales::dollar(unir$Monto, prefix = "S/. ")
+    
+    df <- unir
+    
+    datatable(
+      df
+    )
+  })
+  
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  #::::::::::::::::::              GRAFICOS                :::::::::::::::::::::
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  
+  output$plot_subfamilia_producto <- renderPlot({
+    
+    filtered <- filtered_data_PRODUCTO()
+    
+    subarea <- filtered %>% group_by(SUBFAMILIA) %>% summarise(Monto = sum(cantidad_pu))
+    
+    # Detectar si está en modo oscuro o claro con input$dark_mode
+    is_dark_mode <- input$dark_mode  # TRUE si está activado, FALSE si no
+    
+    bg_color <- ifelse(is_dark_mode, "#343a40", "white") 
+    text_color <- ifelse(is_dark_mode, "white", "black")
+    line_color <- ifelse(is_dark_mode, "#17e0ff", "#38a0b0")
+    
+    if (nrow(subarea) == 0) {
+      return(ggplot() +
+               geom_text(aes(x = 1, y = 1, label = "No hay datos disponibles\npara los filtros seleccionados"), 
+                         size = 6, fontface = "bold", color = line_color) +
+               theme_minimal_hgrid() +
+               theme(
+                 plot.background = element_rect(fill = bg_color)
+               ))
+    }
+    
+    max_cantidad <- max(subarea$Monto, na.rm = TRUE)
+    max_redondeado <- ceiling(max_cantidad / 10) * 10  
+    
+    ggplot(data = subarea, aes(x = reorder(SUBFAMILIA, Monto), y = Monto)) + 
+      geom_bar(stat = "identity", fill = line_color) + 
+      coord_flip() + 
+      theme_minimal_hgrid() +
+      theme(
+        plot.background = element_rect(fill = bg_color), #bg_colou
+        legend.position = "none",
+        plot.title = element_text(hjust = 0.5, size = 12, face = "bold", color = text_color),
+        axis.title.y = element_blank(), #text_color
+        axis.title.x = element_text(face = "bold", size = 10, color = text_color), #text_color
+        axis.text.x = element_text(size = 10, angle = 60, vjust = 0.5, face = "bold", color = text_color), #text_color
+        axis.text.y = element_text(face = "bold", size = 10, color = text_color), #text_color
+      ) + 
+      labs(y = "Monto (S/)", title = "Sub Área") + 
+      geom_label(aes(label = scales::dollar(Monto, prefix = "S/. ")), 
+                 colour = text_color, fill = bg_color,  # Usar la columna calculada
+                 fontface = "bold.italic", hjust = 0.2, size = 4) +
+      scale_y_continuous(labels = etiquetas, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 50000))
+    
+  })
+  
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  #::::::::::::::::::                TABLAS                :::::::::::::::::::::
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  
+  output$downloadExcel_subfamilia_producto <- downloadHandler(
+    filename = function() {
+      paste("Subarea_monto", Sys.Date(), ".xlsx", sep = "_")
+    },
+    content = function(file) {
+      
+      filtered <- filtered_data_PRODUCTO()
+      
+      boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+      subarea <- filtered %>% group_by(SUBFAMILIA) %>%
+        summarise(Monto = sum(cantidad_pu))
+      boletas_subarea <- boletas %>% group_by(SUBFAMILIA) %>%
+        summarise(Boletas = n()) 
+      
+      unir <- merge(x = subarea, y = boletas_subarea, by = "SUBFAMILIA", all.x = TRUE)
+      unir <- unir %>% arrange(desc(Monto))
+      
+      write.xlsx(unir, file, sheetName = "Subarea_monto", row.names = FALSE)
+    }
+  )
+  
+  output$tab_subfamilia_producto <- renderDataTable({
+    
+    filtered <- filtered_data_PRODUCTO()
+    
+    boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+    subarea <- filtered %>% group_by(SUBFAMILIA) %>%
+      summarise(Monto = sum(cantidad_pu))
+    boletas_subarea <- boletas %>% group_by(SUBFAMILIA) %>%
+      summarise(Boletas = n()) 
+    
+    unir <- merge(x = subarea, y = boletas_subarea, by = "SUBFAMILIA", all.x = TRUE)
+    unir <- unir %>% arrange(desc(Monto))
+    unir$Monto <- scales::dollar(unir$Monto, prefix = "S/. ")
+    
+    df <- unir
+    
+    datatable(
+      df
     )
   })
   
