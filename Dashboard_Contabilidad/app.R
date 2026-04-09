@@ -674,6 +674,36 @@ server <- function(input, output, session) {
     return(filtered)
   })
   
+  filtered_data_PERSONA <- reactive({
+    
+    # Filtrar las fechas
+    selected_persona <- input$selectUser
+    
+    filtered <- data$CAJA
+    
+    # Verificar si al menos un filtro está activado
+    any_filter_selected <- any(c(
+      length(selected_persona) > 1
+      #!is.null(selected_date_cotizacion),
+      #!is.null(selected_date_orden),
+      #!is.null(selected_date_caja)
+    ))
+    
+    if (any_filter_selected) {
+      # Aplicar los filtros solo si al menos uno está seleccionado
+      filtered <- data$CAJA
+      
+      if (!"Todos" %in% selected_persona) {
+        filtered <- filtered[filtered$nombre %in% selected_persona, ]
+      }
+      
+    } else {
+      filtered <- data$CAJA
+    }
+    
+    return(filtered)
+  })
+  
   #observeEvent(input$updateButtonOPT, {
   #  showModal(modalDialog(
   #    title = "Actualizando datos Optica",
@@ -701,6 +731,19 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$updateButtonCAJA2, {
+    showModal(modalDialog(
+      title = "Actualizando datos Caja",
+      "Por favor espere mientras se actualizan los datos.",
+      easyClose = FALSE,
+      footer = NULL
+    ))
+    
+    update_dataCAJA()
+    
+    removeModal()
+  })
+  
+  observeEvent(input$updateButtonCAJA3, {
     showModal(modalDialog(
       title = "Actualizando datos Caja",
       "Por favor espere mientras se actualizan los datos.",
@@ -1083,37 +1126,20 @@ server <- function(input, output, session) {
             style = "border: 2px solid #0aa1c6; padding: 15px; border-radius: 10px; margin-bottom: 15px;",
             h3("Filtros"),
             fluidRow(
-              column(4, tags$div(
+              column(12, tags$div(
                 class = "input-group",
                 tags$span(
-                  tags$img(icon("calendar", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Fecha"
+                  tags$img(icon("user", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
+                  " Usuario"
                 ),
-                dateRangeInput("selectDate_Grupo", label = NULL, start = min(data$CAJA$fecha, na.rm = TRUE), 
-                               end = max(data$CAJA$fecha, na.rm = TRUE))
-              )),
-              column(4, tags$div(
-                class = "input-group",
-                tags$span(
-                  tags$img(icon("hospital", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " Area"
-                ),
-                selectInput("selectFamilia", label = NULL, choices = c("Todos", names(table(data$CAJA$FAMILIA))), selected = "Todos", multiple = TRUE)
-              )),
-              column(4, tags$div(
-                class = "input-group",
-                tags$span(
-                  tags$img(icon("hospital-user", lib = "font-awesome"), height = 30, style = "margin-right: 10px;"),
-                  " SubArea"
-                ),
-                selectInput("selectSubfamilia", label = NULL, choices = c("Todos", names(table(data$CAJA$SUBFAMILIA))), selected = "Todos", multiple = TRUE)
+                selectInput("selectUser", label = NULL, choices = c(names(table(data$CAJA$nombre))), multiple = FALSE)
               ))
             )
           ),
           fluidRow(
             column(4,
                    div(
-                     actionButton("updateButtonCAJA", "Actualizar datos", class = "btn btn-primary")#,
+                     actionButton("updateButtonCAJA3", "Actualizar datos", class = "btn btn-primary")#,
                      #id = "updateButton-container"
                    )
             )
@@ -1128,87 +1154,129 @@ server <- function(input, output, session) {
                 title = "General",
                 icon = icon("industry"),
                 fluidRow(
-                  column(12, uiOutput("dynamicTitleFechaCaja"))
-                ),
-                fluidRow(
-                  
-                  column(4, infoBoxOutput("Boletas_emitidas_grupo", width = 12)),
-                  column(4, infoBoxOutput("Cantidades_producto_grupo", width = 12)),
-                  column(4, infoBoxOutput("Recaudacion_grupo", width = 12))
-                  ),
-                  fluidRow(
-                    column(12, 
-                           tabBox(
-                             title = "Evolución costos",
-                             selected = "Costos (G)",
-                             status = "primary",
-                             solidHeader = FALSE,
-                             maximizable = TRUE,
-                             width = 12,
-                             type = "tabs",
-                             tabPanel(
-                               title = "Costos (G)",
-                               width = 12,
-                               plotOutput("plotts_costos_grupo", height = "600px")
-                             ),
-                             tabPanel(
-                               title = "Tabla resumen",
-                               width = 12,
-                               downloadButton("downloadExceltabla_ts_costos_grupo", "Descargar Excel"),
-                               dataTableOutput('tabla_ts_costos_grupo')
-                             )
-                           ))
-                  ),
-                  style = "margin-top: 20px;"
+                  column(12, uiOutput("dynamicTitleFechaCaja3"))
                 ),
                 div(
                   fluidRow(
-                    column(6, 
-                           tabBox(
-                             title = "Área",
-                             selected = "Grafico",
-                             status = "primary",
-                             solidHeader = FALSE,
-                             maximizable = TRUE,
-                             width = 12,
-                             type = "tabs",
-                             tabPanel(
-                               title = "Grafico",
-                               width = 12,
-                               plotOutput("plot_familia_grupo", height = "600px")
-                             ),
-                             tabPanel(
-                               title = "Tabla",
-                               width = 12,
-                               downloadButton("downloadExcel_familia_grupo", "Descargar Excel"),
-                               dataTableOutput('tab_familia_grupo')
-                             )
-                           )),
-                    column(6, 
-                           tabBox(
-                             title = "Sub Area",
-                             selected = "Grafico",
-                             status = "primary",
-                             solidHeader = FALSE,
-                             maximizable = TRUE,
-                             width = 12,
-                             type = "tabs",
-                             tabPanel(
-                               title = "Grafico",
-                               width = 12,
-                               plotOutput("plot_subfamilia_grupo", height = "600px")
-                             ),
-                             tabPanel(
-                               title = "Tabla",
-                               width = 12,
-                               downloadButton("downloadExcel_subfamilia_grupo", "Descargar Excel"),
-                               dataTableOutput('tab_subfamilia_grupo')
-                             )
-                           ))
+                    
+                    column(4, infoBoxOutput("Boletas_emitidas_grupo3", width = 12)),
+                    column(4, infoBoxOutput("Cantidades_producto_grupo3", width = 12)),
+                    column(4, infoBoxOutput("Recaudacion_grupo3", width = 12))
                   ),
-                  style = "margin-top: 20px;"
+                  div(
+                    fluidRow(
+                      column(8, 
+                             tabBox(
+                               title = "Evolución costos",
+                               selected = "Costos (G)",
+                               status = "primary",
+                               solidHeader = FALSE,
+                               maximizable = TRUE,
+                               width = 12,
+                               type = "tabs",
+                               tabPanel(
+                                 title = "Costos (G)",
+                                 width = 12,
+                                 plotOutput("plotts_costos_persona", height = "600px")
+                               ),
+                               tabPanel(
+                                 title = "Tabla resumen",
+                                 width = 12,
+                                 downloadButton("downloadExceltabla_ts_costos_persona", "Descargar Excel"),
+                                 dataTableOutput('tabla_ts_costos_persona')
+                               )
+                             )),
+                      column(4, 
+                             tabBox(
+                               title = "Area",
+                               selected = "Grafico",
+                               status = "primary",
+                               solidHeader = FALSE,
+                               maximizable = TRUE,
+                               width = 12,
+                               type = "tabs",
+                               tabPanel(
+                                 title = "Grafico",
+                                 width = 12,
+                                 plotOutput("plot_area_persona", height = "600px")
+                               ),
+                               tabPanel(
+                                 title = "Tabla",
+                                 width = 12,
+                                 downloadButton("downloadExceltabla_area_persona", "Descargar Excel"),
+                                 dataTableOutput('tabla_area_persona')
+                               )
+                             ))
+                    ),
+                    style = "margin-top: 20px;"
+                  ),
+                  div(
+                    fluidRow(
+                      column(4, 
+                             tabBox(
+                               title = "Sub Area",
+                               selected = "Grafico",
+                               status = "primary",
+                               solidHeader = FALSE,
+                               maximizable = TRUE,
+                               width = 12,
+                               type = "tabs",
+                               tabPanel(
+                                 title = "Grafico",
+                                 width = 12,
+                                 plotOutput("plot_subfamilia_persona", height = "600px")
+                               ),
+                               tabPanel(
+                                 title = "Tabla",
+                                 width = 12,
+                                 downloadButton("downloadExcel_subfamilia_persona", "Descargar Excel"),
+                                 dataTableOutput('tab_subfamilia_persona')
+                               )
+                             )),
+                      column(8, 
+                             tabBox(
+                               title = "Tipo",
+                               selected = "Grafico",
+                               status = "primary",
+                               solidHeader = FALSE,
+                               maximizable = TRUE,
+                               width = 12,
+                               type = "tabs",
+                               tabPanel(
+                                 title = "Grafico",
+                                 width = 12,
+                                 plotOutput("plot_persona_producto", height = "600px")
+                               ),
+                               tabPanel(
+                                 title = "Tabla",
+                                 width = 12,
+                                 downloadButton("downloadExcel_persona_producto", "Descargar Excel"),
+                                 dataTableOutput('tab_persona_producto')
+                               )
+                             ))
+                    ),
+                    style = "margin-top: 20px;"
+                  )
+                )
+              ),
+              tabPanel(
+                title = "Lista movimientos",
+                icon = icon("hand-holding"),
+                fluidRow(
+                  column(12, 
+                         box(
+                           title = "Lista movimientos",
+                           status = "primary",
+                           solidHeader = TRUE,
+                           maximizable = TRUE,
+                           width = 12,
+                           downloadButton("downloadExcel_Persona_Productos", "Descargar Excel"),
+                           DT::dataTableOutput('tabla_persona_productos')
+                         )
+                  )
                 )
               )
+            )
             ),
             style = "margin-top: 20px;"
           )
@@ -2027,7 +2095,509 @@ server <- function(input, output, session) {
     )
   })
   
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  #:::::::::::::::            ANALISIS POR GRUPOS            :::::::::::::::::::
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   
+  output$dynamicTitleFechaCaja3 <- renderUI({
+    req(data$CAJA)
+    
+    fecha <- max(data$CAJA$fecha)
+    
+    titulo <- paste0(
+      "<span class='dynamic-title-light'>Fecha última actualización: </span>",
+      "<span class='textdinamic'>",
+      fecha,
+      " actualizar en Sistemas</span>"
+    )
+    
+    if (isTRUE(input$dark_mode)) {
+      titulo <- paste0(
+        "<span class='dynamic-title-dark'>Fecha última actualización: </span>",
+        "<span class='textdinamic-dark'>",
+        fecha,
+        " actualizar en Sistemas</span>"
+      )
+    }
+    
+    h3(HTML(titulo), style = "font-weight: bold; text-align: center; margin-bottom: 20px;")
+  })
+  
+  output$Boletas_emitidas_grupo3 <- renderInfoBox({
+    
+    filtered <- filtered_data_PERSONA()
+    
+    boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+    cant_boletas <- nrow(boletas)
+    
+    infoBox(
+      paste0("Boletas: "),
+      cant_boletas,
+      paste0("Realizadas"),
+      icon = icon("file"),
+      color = "info",
+      width = NULL
+    )
+  })
+  
+  output$Cantidades_producto_grupo3 <- renderInfoBox({
+    
+    filtered <- filtered_data_PERSONA()
+    
+    cantidades <- sum(filtered$cantidad_prod)
+    
+    infoBox(
+      paste0("Cantidades: "),
+      cantidades,
+      paste0("Productos/servicios solicitados"),
+      icon = icon("bag-shopping"),
+      color = "info",
+      width = NULL
+    )
+    
+  })
+  
+  output$Recaudacion_grupo3 <- renderInfoBox({
+    
+    filtered <- filtered_data_PERSONA()
+    
+    montos <- sum(filtered$cantidad_pu)
+    
+    infoBox(
+      paste0("Recaudacion: "),
+      scales::dollar(montos, prefix = "S/. "),
+      paste0("En Total"),
+      icon = icon("fas fa-hand-holding-dollar"),
+      color = "success",
+      width = NULL
+    )
+  })
+  
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  #:::::::::::::::::::::::             GRAFICO              ::::::::::::::::::::
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  
+  output$plotts_costos_persona <- renderPlot({
+    
+    filtered <- filtered_data_PERSONA()
+    
+    is_dark_mode <- input$dark_mode
+    
+    bg_color <- ifelse(is_dark_mode, "#343a40", "white") 
+    text_color <- ifelse(is_dark_mode, "white", "black")
+    line_color <- ifelse(is_dark_mode, "#17e0ff", "#38a0b0")
+    
+    if (nrow(filtered) == 0) {
+      return(ggplot() +
+               geom_text(aes(x = 1, y = 1, label = "No hay datos disponibles\npara los filtros seleccionados"), 
+                         size = 6, fontface = "bold", color = line_color) +
+               theme_minimal_hgrid() +
+               theme(
+                 plot.background = element_rect(fill = bg_color)
+               ))
+    }
+    
+    recaudacion_por_mes <- filtered %>%
+      group_by(Mes = format(fecha, "%Y-%m")) %>%
+      summarise(Monto = sum(cantidad_pu))
+    
+    recaudacion_por_mes$Mes <- as.Date(paste0(recaudacion_por_mes$Mes, "-01"))
+    recaudacion_por_mes$Año <- format(recaudacion_por_mes$Mes, "%Y")
+    cambios_de_año <- which(diff(as.numeric(recaudacion_por_mes$Año)) != 0)
+    
+    max_cantidad <- max(recaudacion_por_mes$Monto, na.rm = TRUE)
+    max_redondeado <- ceiling(max_cantidad / 10) * 10  
+    
+    ggplot(recaudacion_por_mes, aes(x = Mes, y = Monto)) + 
+      geom_line(group = 1, color = line_color, linetype = "solid") + 
+      geom_point(size = 1, shape = 21, stroke = 2, fill = "#00bcf5", color = "#00bcf5") +
+      theme_minimal_hgrid() +
+      labs(x = "Fecha", y = "Cantidad", title = "Montos totales por mes") +
+      geom_vline(
+        xintercept = as.numeric(recaudacion_por_mes$Mes[cambios_de_año]),
+        color = "#00bcf5",  
+        linetype = "dashed",  
+        size = 1  
+      ) +
+      theme(
+        plot.background = element_rect(fill = bg_color),  
+        legend.position = "none",
+        plot.title = element_text(hjust = 0.5, size = 25, face = "bold", color = "#0aa1c6"),
+        axis.title.y = element_text(face = "bold", size = 15, color = text_color),
+        axis.title.x = element_text(face = "bold", size = 15, color = text_color),
+        axis.text.x = element_text(size = 12, angle = 90, vjust = 0.5, face = "bold", color = text_color),
+        axis.text.y = element_text(face = "bold", size = 10, color = text_color)
+      ) +
+      geom_label(
+        data = recaudacion_por_mes,
+        aes(label = scales::dollar(Monto, prefix = "S/. ")),
+        size = 4,
+        label.padding = unit(0.5, "lines"),
+        label.r = unit(0.15, "lines"),
+        fontface = "bold",
+        color = text_color,
+        fill = bg_color
+      ) +
+      scale_x_date(
+        date_labels = "%Y-%m",
+        date_breaks = "1 month"
+      ) +
+      scale_y_continuous(
+        breaks = seq(0, max_redondeado, by = 100000),
+        labels = seq(0, max_redondeado, by = 100000)
+      )
+  })
+  
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  #::::::::::::::::::               TABLAS                 :::::::::::::::::::::
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  
+  output$downloadExceltabla_ts_costos_persona <- downloadHandler(
+    filename = function() {
+      paste("Costos_por_mes", Sys.Date(), ".xlsx", sep = "_")
+    },
+    content = function(file) {
+      
+      filtered <- filtered_data_PERSONA()
+      
+      boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+      costos <- filtered %>% group_by(Mes = format(fecha, "%Y-%m")) %>% summarise(Recaudacion = sum(cantidad_pu))
+      boletas_mes <- boletas %>% group_by(Mes = format(fecha, "%Y-%m")) %>% summarise(Boletas = n())
+      
+      unir <- merge(x = costos, y = boletas_mes, by = "Mes", all.x = TRUE)
+      
+      write.xlsx(unir, file, sheetName = "Costos_por_mes", row.names = FALSE)
+    }
+  )
+  
+  output$tabla_ts_costos_persona <- renderDataTable({
+    
+    filtered <- filtered_data_PERSONA()
+    
+    boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+    costos <- filtered %>% group_by(Mes = format(fecha, "%Y-%m")) %>% summarise(Recaudacion = scales::dollar(sum(cantidad_pu), prefix = "S/. "))
+    boletas_mes <- boletas %>% group_by(Mes = format(fecha, "%Y-%m")) %>% summarise(Boletas = n())
+    
+    unir <- merge(x = costos, y = boletas_mes, by = "Mes", all.x = TRUE)
+    
+    df <- unir
+    
+    datatable(
+      df
+    )
+  })
+  
+  output$plot_area_persona <- renderPlot({
+    
+    filtered <- filtered_data_PERSONA()
+    areas <- filtered %>% group_by(FAMILIA) %>% 
+      summarise(Monto = sum(cantidad_pu)) %>% arrange(desc(Monto))
+    
+    # Detectar si está en modo oscuro o claro con input$dark_mode
+    is_dark_mode <- input$dark_mode  # TRUE si está activado, FALSE si no
+    
+    bg_color <- ifelse(is_dark_mode, "#343a40", "white") 
+    text_color <- ifelse(is_dark_mode, "white", "black")
+    line_color <- ifelse(is_dark_mode, "#17e0ff", "#38a0b0")
+    
+    if (nrow(areas) == 0) {
+      return(ggplot() +
+               geom_text(aes(x = 1, y = 1, label = "No hay datos disponibles\npara los filtros seleccionados"), 
+                         size = 6, fontface = "bold", color = line_color) +
+               theme_minimal_hgrid() +
+               theme(
+                 plot.background = element_rect(fill = bg_color)
+               ))
+    }
+    
+    max_cantidad <- max(areas$Monto, na.rm = TRUE)
+    max_redondeado <- ceiling(max_cantidad / 10) * 10  
+    
+    ggplot(data = areas, aes(x = reorder(FAMILIA, Monto), y = Monto)) + 
+      geom_bar(stat = "identity", fill = line_color) + 
+      coord_flip() + 
+      theme_minimal_hgrid() +
+      theme(
+        plot.background = element_rect(fill = bg_color), #bg_colou
+        legend.position = "none",
+        plot.title = element_text(hjust = 0.5, size = 12, face = "bold", color = text_color),
+        axis.title.y = element_blank(), #text_color
+        axis.title.x = element_text(face = "bold", size = 10, color = text_color), #text_color
+        axis.text.x = element_text(size = 10, angle = 60, vjust = 0.5, face = "bold", color = text_color), #text_color
+        axis.text.y = element_text(face = "bold", size = 10, color = text_color), #text_color
+      ) + 
+      labs(y = "Montos (S/.)", title = "Areas") + 
+      geom_label(aes(label = scales::dollar(Monto, prefix = "S/. ")), 
+                 colour = text_color, fill = bg_color,  # Usar la columna calculada
+                 fontface = "bold.italic", hjust = 0.2, size = 4) +
+      scale_y_continuous(labels = etiquetas, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 50000))
+    
+  })
+  
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  #::::::::::::::::::                TABLAS                :::::::::::::::::::::
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  
+  output$downloadExceltabla_area_persona <- downloadHandler(
+    filename = function() {
+      paste("Areas_montos", Sys.Date(), ".xlsx", sep = "_")
+    },
+    content = function(file) {
+      
+      filtered <- filtered_data_PERSONA()
+      
+      boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+      areas <- filtered %>% group_by(FAMILIA) %>% summarise(Monto = sum(cantidad_pu))
+      
+      boletas_areas <- boletas %>% group_by(FAMILIA) %>% summarise(Boletas = n())
+      
+      unir <- merge(x = areas, y = boletas_areas, by = "FAMILIA", all.x = TRUE)
+      unir <- unir %>% arrange(desc(Monto))
+      
+      write.xlsx(unir, file, sheetName = "Areas_montos", row.names = FALSE)
+    }
+  )
+  
+  output$tabla_area_persona <- renderDataTable({
+    
+    filtered <- filtered_data_GRUPO()
+    
+    boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+    areas <- filtered %>% group_by(FAMILIA) %>% summarise(Monto = sum(cantidad_pu))
+    
+    boletas_areas <- boletas %>% group_by(FAMILIA) %>% summarise(Boletas = n())
+    
+    unir <- merge(x = areas, y = boletas_areas, by = "FAMILIA", all.x = TRUE)
+    unir <- unir %>% arrange(desc(Monto))
+    unir$Monto <- scales::dollar(unir$Monto, prefix = "S/. ")
+    
+    df <- unir
+    
+    datatable(
+      df
+    )
+  })
+  
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  #::::::::::::::::::              GRAFICOS                :::::::::::::::::::::
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  
+  output$plot_subfamilia_persona <- renderPlot({
+    
+    filtered <- filtered_data_PERSONA()
+    
+    subarea <- filtered %>% group_by(SUBFAMILIA) %>% summarise(Monto = sum(cantidad_pu))
+    
+    # Detectar si está en modo oscuro o claro con input$dark_mode
+    is_dark_mode <- input$dark_mode  # TRUE si está activado, FALSE si no
+    
+    bg_color <- ifelse(is_dark_mode, "#343a40", "white") 
+    text_color <- ifelse(is_dark_mode, "white", "black")
+    line_color <- ifelse(is_dark_mode, "#17e0ff", "#38a0b0")
+    
+    if (nrow(subarea) == 0) {
+      return(ggplot() +
+               geom_text(aes(x = 1, y = 1, label = "No hay datos disponibles\npara los filtros seleccionados"), 
+                         size = 6, fontface = "bold", color = line_color) +
+               theme_minimal_hgrid() +
+               theme(
+                 plot.background = element_rect(fill = bg_color)
+               ))
+    }
+    
+    max_cantidad <- max(subarea$Monto, na.rm = TRUE)
+    max_redondeado <- ceiling(max_cantidad / 10) * 10  
+    
+    ggplot(data = subarea, aes(x = reorder(SUBFAMILIA, Monto), y = Monto)) + 
+      geom_bar(stat = "identity", fill = line_color) + 
+      coord_flip() + 
+      theme_minimal_hgrid() +
+      theme(
+        plot.background = element_rect(fill = bg_color), #bg_colou
+        legend.position = "none",
+        plot.title = element_text(hjust = 0.5, size = 12, face = "bold", color = text_color),
+        axis.title.y = element_blank(), #text_color
+        axis.title.x = element_text(face = "bold", size = 10, color = text_color), #text_color
+        axis.text.x = element_text(size = 10, angle = 60, vjust = 0.5, face = "bold", color = text_color), #text_color
+        axis.text.y = element_text(face = "bold", size = 10, color = text_color), #text_color
+      ) + 
+      labs(y = "Monto (S/)", title = "Sub Área") + 
+      geom_label(aes(label = scales::dollar(Monto, prefix = "S/. ")), 
+                 colour = text_color, fill = bg_color,  # Usar la columna calculada
+                 fontface = "bold.italic", hjust = 0.2, size = 4) +
+      scale_y_continuous(labels = etiquetas, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 250000))
+    
+  })
+  
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  #::::::::::::::::::                TABLAS                :::::::::::::::::::::
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  
+  output$downloadExcel_subfamilia_persona <- downloadHandler(
+    filename = function() {
+      paste("Subarea_monto", Sys.Date(), ".xlsx", sep = "_")
+    },
+    content = function(file) {
+      
+      filtered <- filtered_data_PERSONA()
+      
+      boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+      subarea <- filtered %>% group_by(SUBFAMILIA) %>%
+        summarise(Monto = sum(cantidad_pu))
+      boletas_subarea <- boletas %>% group_by(SUBFAMILIA) %>%
+        summarise(Boletas = n()) 
+      
+      unir <- merge(x = subarea, y = boletas_subarea, by = "SUBFAMILIA", all.x = TRUE)
+      unir <- unir %>% arrange(desc(Monto))
+      
+      write.xlsx(unir, file, sheetName = "Subarea_monto", row.names = FALSE)
+    }
+  )
+  
+  output$tab_subfamilia_persona <- renderDataTable({
+    
+    filtered <- filtered_data_PRODUCTO()
+    
+    boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
+    subarea <- filtered %>% group_by(SUBFAMILIA) %>%
+      summarise(Monto = sum(cantidad_pu))
+    boletas_subarea <- boletas %>% group_by(SUBFAMILIA) %>%
+      summarise(Boletas = n()) 
+    
+    unir <- merge(x = subarea, y = boletas_subarea, by = "SUBFAMILIA", all.x = TRUE)
+    unir <- unir %>% arrange(desc(Monto))
+    unir$Monto <- scales::dollar(unir$Monto, prefix = "S/. ")
+    
+    df <- unir
+    
+    datatable(
+      df
+    )
+  })
+  
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  #::::::::::::::::::              GRAFICOS                :::::::::::::::::::::
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  
+  output$plot_persona_producto <- renderPlot({
+    
+    filtered <- filtered_data_PERSONA()
+    
+    tipo <- filtered %>% group_by(descripcion) %>% summarise(Monto = sum(cantidad_pu)) %>%
+      arrange(desc(Monto)) %>% head(10)
+    
+    # Detectar si está en modo oscuro o claro con input$dark_mode
+    is_dark_mode <- input$dark_mode  # TRUE si está activado, FALSE si no
+    
+    bg_color <- ifelse(is_dark_mode, "#343a40", "white") 
+    text_color <- ifelse(is_dark_mode, "white", "black")
+    line_color <- ifelse(is_dark_mode, "#17e0ff", "#38a0b0")
+    
+    if (nrow(tipo) == 0) {
+      return(ggplot() +
+               geom_text(aes(x = 1, y = 1, label = "No hay datos disponibles\npara los filtros seleccionados"), 
+                         size = 6, fontface = "bold", color = line_color) +
+               theme_minimal_hgrid() +
+               theme(
+                 plot.background = element_rect(fill = bg_color)
+               ))
+    }
+    
+    max_cantidad <- max(tipo$Monto, na.rm = TRUE)
+    max_redondeado <- ceiling(max_cantidad / 10) * 10  
+    
+    ggplot(data = tipo, aes(x = reorder(descripcion, Monto), y = Monto)) + 
+      geom_bar(stat = "identity", fill = line_color) + 
+      coord_flip() + 
+      theme_minimal_hgrid() +
+      theme(
+        plot.background = element_rect(fill = bg_color), #bg_colou
+        legend.position = "none",
+        plot.title = element_text(hjust = 0.5, size = 12, face = "bold", color = text_color),
+        axis.title.y = element_blank(), #text_color
+        axis.title.x = element_text(face = "bold", size = 10, color = text_color), #text_color
+        axis.text.x = element_text(size = 10, angle = 60, vjust = 0.5, face = "bold", color = text_color), #text_color
+        axis.text.y = element_text(face = "bold", size = 10, color = text_color), #text_color
+      ) + 
+      labs(y = "Monto (S/)", title = "Top productos") + 
+      geom_label(aes(label = scales::dollar(Monto, prefix = "S/. ")), 
+                 colour = text_color, fill = bg_color,  # Usar la columna calculada
+                 fontface = "bold.italic", hjust = 0.2, size = 4) +
+      scale_y_continuous(labels = etiquetas, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 250000))
+    
+  })
+  
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  #::::::::::::::::::                TABLAS                :::::::::::::::::::::
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  
+  output$downloadExcel_persona_producto <- downloadHandler(
+    filename = function() {
+      paste("Tipo_monto", Sys.Date(), ".xlsx", sep = "_")
+    },
+    content = function(file) {
+      
+      filtered <- filtered_data_PERSONA()
+      
+      tipo <- filtered %>% group_by(descripcion) %>%
+        summarise(Cantidad = sum(cantidad_prod), Monto = sum(cantidad_pu)) %>%
+        arrange(desc(Monto))
+      
+      write.xlsx(tipo, file, sheetName = "Tipo_monto", row.names = FALSE)
+    }
+  )
+  
+  output$tab_persona_producto <- renderDataTable({
+    
+    filtered <- filtered_data_PERSONA()
+    
+    tipo <- filtered %>% group_by(descripcion) %>%
+      summarise(Cantidad = sum(cantidad_prod), Monto = sum(cantidad_pu)) %>%
+      arrange(desc(Monto))
+    tipo$Monto <- scales::dollar(tipo$Monto, prefix = "S/. ")
+    
+    df <- tipo
+    
+    datatable(
+      df
+    )
+  })
+  
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  #::::::::::::::::::                TABLAS                :::::::::::::::::::::
+  #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  
+  output$downloadExcel_Persona_Productos <- downloadHandler(
+    filename = function() {
+      paste("Productos", Sys.Date(), ".xlsx", sep = "_")
+    },
+    content = function(file) {
+      
+      filtered <- filtered_data_PERSONA()
+      
+      seleccionar <- filtered %>% select(producto, Boleta = ID, fecha, cantidad_prod, pu, cantidad_pu) %>%
+        arrange(desc(fecha))
+      
+      write.xlsx(seleccionar, file, sheetName = "Productos", row.names = FALSE)
+    }
+  )
+  
+  output$tabla_persona_productos <- renderDataTable({
+    
+    filtered <- filtered_data_PERSONA()
+    
+    seleccionar <- filtered %>% select(producto, Boleta = ID, fecha, cantidad_prod, pu, cantidad_pu) %>%
+      arrange(desc(fecha))
+    
+    seleccionar$pu <- scales::dollar(seleccionar$pu, prefix = "S/. ")
+    seleccionar$cantidad_pu <- scales::dollar(seleccionar$cantidad_pu, prefix = "S/. ")
+    
+    df <- seleccionar
+    
+    datatable(
+      df
+    )
+  })
   
 }
 
