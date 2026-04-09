@@ -1870,11 +1870,11 @@ server <- function(input, output, session) {
   #::::::::::::::::::              GRAFICOS                :::::::::::::::::::::
   #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   
-  output$plot_subfamilia_producto <- renderPlot({
+  output$plot_tipo_producto <- renderPlot({
     
     filtered <- filtered_data_PRODUCTO()
     
-    subarea <- filtered %>% group_by(SUBFAMILIA) %>% summarise(Monto = sum(cantidad_pu))
+    tipo <- filtered %>% group_by(tipo) %>% summarise(Cantidad = sum(cantidad_prod))
     
     # Detectar si está en modo oscuro o claro con input$dark_mode
     is_dark_mode <- input$dark_mode  # TRUE si está activado, FALSE si no
@@ -1883,7 +1883,7 @@ server <- function(input, output, session) {
     text_color <- ifelse(is_dark_mode, "white", "black")
     line_color <- ifelse(is_dark_mode, "#17e0ff", "#38a0b0")
     
-    if (nrow(subarea) == 0) {
+    if (nrow(tipo) == 0) {
       return(ggplot() +
                geom_text(aes(x = 1, y = 1, label = "No hay datos disponibles\npara los filtros seleccionados"), 
                          size = 6, fontface = "bold", color = line_color) +
@@ -1893,10 +1893,10 @@ server <- function(input, output, session) {
                ))
     }
     
-    max_cantidad <- max(subarea$Monto, na.rm = TRUE)
+    max_cantidad <- max(tipo$Cantidad, na.rm = TRUE)
     max_redondeado <- ceiling(max_cantidad / 10) * 10  
     
-    ggplot(data = subarea, aes(x = reorder(SUBFAMILIA, Monto), y = Monto)) + 
+    ggplot(data = tipo, aes(x = reorder(tipo, Cantidad), y = Cantidad)) + 
       geom_bar(stat = "identity", fill = line_color) + 
       coord_flip() + 
       theme_minimal_hgrid() +
@@ -1909,11 +1909,11 @@ server <- function(input, output, session) {
         axis.text.x = element_text(size = 10, angle = 60, vjust = 0.5, face = "bold", color = text_color), #text_color
         axis.text.y = element_text(face = "bold", size = 10, color = text_color), #text_color
       ) + 
-      labs(y = "Monto (S/)", title = "Sub Área") + 
-      geom_label(aes(label = scales::dollar(Monto, prefix = "S/. ")), 
+      labs(y = "Cantidad", title = "Tipo") + 
+      geom_label(aes(label = Cantidad), 
                  colour = text_color, fill = bg_color,  # Usar la columna calculada
                  fontface = "bold.italic", hjust = 0.2, size = 4) +
-      scale_y_continuous(labels = etiquetas, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 50000))
+      scale_y_continuous(limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 10000))
     
   })
   
@@ -1921,42 +1921,32 @@ server <- function(input, output, session) {
   #::::::::::::::::::                TABLAS                :::::::::::::::::::::
   #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   
-  output$downloadExcel_subfamilia_producto <- downloadHandler(
+  output$downloadExcel_tipo_producto <- downloadHandler(
     filename = function() {
-      paste("Subarea_monto", Sys.Date(), ".xlsx", sep = "_")
+      paste("Tipo_monto", Sys.Date(), ".xlsx", sep = "_")
     },
     content = function(file) {
       
       filtered <- filtered_data_PRODUCTO()
       
-      boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
-      subarea <- filtered %>% group_by(SUBFAMILIA) %>%
-        summarise(Monto = sum(cantidad_pu))
-      boletas_subarea <- boletas %>% group_by(SUBFAMILIA) %>%
-        summarise(Boletas = n()) 
+      tipo <- filtered %>% group_by(tipo) %>%
+        summarise(Cantidad = sum(cantidad_prod), Monto = sum(cantidad_pu)) %>%
+        arrange(desc(Monto))
       
-      unir <- merge(x = subarea, y = boletas_subarea, by = "SUBFAMILIA", all.x = TRUE)
-      unir <- unir %>% arrange(desc(Monto))
-      
-      write.xlsx(unir, file, sheetName = "Subarea_monto", row.names = FALSE)
+      write.xlsx(tipo, file, sheetName = "Tipo_monto", row.names = FALSE)
     }
   )
   
-  output$tab_subfamilia_producto <- renderDataTable({
+  output$tab_tipo_producto <- renderDataTable({
     
     filtered <- filtered_data_PRODUCTO()
     
-    boletas <- filtered %>% distinct(ID, .keep_all = TRUE)
-    subarea <- filtered %>% group_by(SUBFAMILIA) %>%
-      summarise(Monto = sum(cantidad_pu))
-    boletas_subarea <- boletas %>% group_by(SUBFAMILIA) %>%
-      summarise(Boletas = n()) 
+    tipo <- filtered %>% group_by(tipo) %>%
+      summarise(Cantidad = sum(cantidad_prod), Monto = sum(cantidad_pu)) %>%
+      arrange(desc(Monto))
+    tipo$Monto <- scales::dollar(tipo$Monto, prefix = "S/. ")
     
-    unir <- merge(x = subarea, y = boletas_subarea, by = "SUBFAMILIA", all.x = TRUE)
-    unir <- unir %>% arrange(desc(Monto))
-    unir$Monto <- scales::dollar(unir$Monto, prefix = "S/. ")
-    
-    df <- unir
+    df <- tipo
     
     datatable(
       df
