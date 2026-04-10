@@ -674,30 +674,30 @@ server <- function(input, output, session) {
     return(filtered)
   })
   
+  filtered_data_PDEO2 <- reactive({
+    selected_name_PDEO <- input$selectName_PDEO # Nombre del paciente
+    
+    if (!is.null(selected_name_PDEO) && selected_name_PDEO != "") {
+      # Filtrar solo cuando hay una selección válida
+      filtered <- data$PDEO[data$PDEO$nombre == selected_name_PDEO, ]
+    } else {
+      # Si no hay selección, devolver todo
+      filtered <- data$PDEO
+    }
+    
+    return(filtered)
+  })
+  
   filtered_data_PERSONA <- reactive({
     
     # Filtrar las fechas
     selected_persona <- input$selectUser
     
-    filtered <- data$CAJA
-    
-    # Verificar si al menos un filtro está activado
-    any_filter_selected <- any(c(
-      length(selected_persona) > 1
-      #!is.null(selected_date_cotizacion),
-      #!is.null(selected_date_orden),
-      #!is.null(selected_date_caja)
-    ))
-    
-    if (any_filter_selected) {
-      # Aplicar los filtros solo si al menos uno está seleccionado
-      filtered <- data$CAJA
-      
-      if (!"Todos" %in% selected_persona) {
-        filtered <- filtered[filtered$nombre %in% selected_persona, ]
-      }
-      
+    if (!is.null(selected_persona) && selected_persona != "") {
+      # Filtrar solo cuando hay una selección válida
+      filtered <- data$CAJA[data$CAJA$nombre == selected_persona, ]
     } else {
+      # Si no hay selección, devolver todo
       filtered <- data$CAJA
     }
     
