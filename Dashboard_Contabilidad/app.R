@@ -930,24 +930,7 @@ server <- function(input, output, session) {
                            ))
                   ),
                   style = "margin-top: 20px;"
-                ),
-              tabPanel(
-                title = "Lista productos",
-                icon = icon("industry"),
-                fluidRow(
-                  column(12, 
-                         box(
-                           title = "Lista productos",
-                           status = "primary",
-                           solidHeader = TRUE,
-                           maximizable = TRUE,
-                           width = 12,
-                           downloadButton("downloadExcel_Productos", "Descargar Excel"),
-                           DT::dataTableOutput('tabla_productos')
-                         )
-                  )
                 )
-              )
               )
             ),
           style = "margin-top: 20px;"
@@ -1443,8 +1426,7 @@ server <- function(input, output, session) {
         date_breaks = "1 month"
       ) +
       scale_y_continuous(
-        breaks = seq(0, max_redondeado, by = 100000),
-        labels = seq(0, max_redondeado, by = 100000)
+        labels = etiquetas, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 500000)
       )
   })
   
@@ -1537,7 +1519,7 @@ server <- function(input, output, session) {
       geom_label(aes(label = scales::dollar(Monto, prefix = "S/. ")), 
                  colour = text_color, fill = bg_color,  # Usar la columna calculada
                  fontface = "bold.italic", hjust = 0.2, size = 4) +
-      scale_y_continuous(labels = etiquetas, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 50000))
+      scale_y_continuous(labels = etiquetas, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 100000))
     
   })
   
@@ -1633,7 +1615,7 @@ server <- function(input, output, session) {
       geom_label(aes(label = scales::dollar(Monto, prefix = "S/. ")), 
                  colour = text_color, fill = bg_color,  # Usar la columna calculada
                  fontface = "bold.italic", hjust = 0.2, size = 4) +
-      scale_y_continuous(labels = etiquetas, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 50000))
+      scale_y_continuous(labels = etiquetas, limits = c(0, max_redondeado), breaks = seq(0, max_redondeado, 100000))
     
   })
   
